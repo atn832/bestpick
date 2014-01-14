@@ -1,0 +1,13 @@
+img {
+    width: 200px;
+    height: auto;
+}
+
+.containerparent {
+}
+
+nav {
+    position:fixed;
+    bottom: 0;
+    z-index: 100
+}
