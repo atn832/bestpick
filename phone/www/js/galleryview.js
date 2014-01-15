@@ -6,9 +6,6 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
         className: "gallery",
         initialize: function() {
             Logger.log("gv init, model:", this.model);
-//            this.on("all", function(event) {
-//                Logger.log("gv", event);
-//            });
             this.model.on("all", function(event) {
                 Logger.log("gv model event:", event);
                 this.render();
