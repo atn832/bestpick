@@ -9,7 +9,11 @@ var gallery;
 var galleryView;
 
 var links =
-    ["img/IMG_20140113_133216553.jpg",
+    [
+    "img/SAM_1640.JPG",
+    "img/SAM_1641.JPG",
+    "img/SAM_1642.JPG",
+    "img/IMG_20140113_133216553.jpg",
     "img/IMG_20140113_133147585.jpg",
     "img/IMG_20140113_133208878.jpg",
     "img/IMG_20140113_133150398.jpg",
@@ -112,6 +116,12 @@ function initialize() {
                 }
             }
         });
+        
+        // Listen to pinch, scale the image when in Show Selected mode
+//        Hammer(gv.el, {prevent_default:true}).on("pinch", function(event) {
+//            Logger.log("pinch " + event.gesture.scale);
+//        });
+        
         // listener to selected images
         g.on("add:selectedImages remove:selectedImages reset:selectedImages", function() {
             updateSelectButtonState(g, gv);

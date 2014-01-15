@@ -1,12 +1,12 @@
 html, body {
     height: 100%;
-    border: 1px solid green;
+    border: 0px solid green;
     margin: 0;
     padding: 0;
 }
 
 #container {
-    border: 1px solid red;
+    border: 0px solid red;
     background-color: lightgray;
     height: 100%;
 }
