@@ -1,7 +1,7 @@
 var containerID = "container";
 var selectBtnID = "btnSelect";
 var keepBtnID = "btnKeep";
-
+var logsBtnId = "btnLogs";
 var selectBtn;
 var keepBtn;
 
@@ -16,8 +16,6 @@ var links =
     "img/IMG_20140113_133157183.jpg",
     "img/IMG_20140113_133135059_HDR.jpg",
     "img/IMG_20140113_133138099.jpg",
-//    "img/IMG_20140112_155947090.jpg",
-//    "img/IMG_20140112_155952408.jpg",
     "img/IMG_20140111_123826003.jpg",
     "img/IMG_20140111_123823790.jpg",
     "img/IMG_20140108_174405213.jpg",
@@ -66,8 +64,13 @@ function initialize() {
         galleryView.setShowSelected(false);
     });
     
-    require(["gallery", "galleryview", "image"], function(Gallery, GalleryView, Image) {
-        console.log("initializing gallery");
+    require(["gallery", "galleryview", "image", "logger"], function(Gallery, GalleryView, Image, Logger) {
+        var logsBtn = document.getElementById(logsBtnId);
+        logsBtn.addEventListener("click", function() {
+            Logger.showAll();
+        });
+
+        Logger.log("initializing gallery");
         var container = document.getElementById(containerID);
         
         var images = links.map(function(url) {
@@ -77,7 +80,7 @@ function initialize() {
         var g = new Gallery();
         gallery = g;
         g.on("all", function(event) {
-            console.log(event);
+            Logger.log(event);
         });
 //        console.log("g model", g.get("images"));
         g.get("images").add(images);
@@ -93,17 +96,18 @@ function initialize() {
         // put listeners on to images:
         // if touch on it, toggle
         Hammer(gv.el).on("tap", function(event) {
-            console.log("tap");
+            Logger.log("tap", event);
             var el = event.target;
-            if (el.className.indexOf("galleryImage") >= 0) {
+            if (el.model) {
                 var image = el.model;
                 if (galleryView.isShowSelected()) {
                     // toggle favorites
-                    var isFavorite = !el.model.get("isFavorite")
+                    var isFavorite = !el.model.get("isFavorite");
                     image.set("isFavorite", isFavorite);
                 }
                 else {
-                    var isSelected = !el.model.get("isSelected")
+                    var isSelected = !el.model.get("isSelected");
+                    Logger.log("setting is selected");
                     image.set("isSelected", isSelected);
                 }
             }

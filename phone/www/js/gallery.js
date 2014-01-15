@@ -1,4 +1,4 @@
-define(["image"], function(Image) {
+define(["logger", "image"], function(Logger, Image) {
     var ProtoGallery = Backbone.Model.extend({
         images: null,
         selectedImages: null,
@@ -19,15 +19,15 @@ define(["image"], function(Image) {
             this.set("favoriteImages", favoriteImages);
             
             images.on("all", function(event, object) {
-//                console.log("g images", event);
+//                Logger.log("g images", event);
                 this.trigger(event + ":images", object);
             }.bind(this));
             selectedImages.on("all", function(event, object) {
-//                console.log("g selimages", event);
+//                Logger.log("g selimages", event);
                 this.trigger(event + ":selectedImages", object);
             }.bind(this));
             favoriteImages.on("all", function(event, object) {
-//                console.log("g favimages", event);
+//                Logger.log("g favimages", event);
                 this.trigger(event + ":favoriteImages", object);
             }.bind(this));
             

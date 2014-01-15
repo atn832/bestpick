@@ -1,16 +1,16 @@
-define(["gallery", "imageview"], function(Gallery, ImageView) {
+define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) {
     var cssBorderWidth = 4;
     
     var GalleryView = Backbone.View.extend({
         tagName: "div",
         className: "gallery",
         initialize: function() {
-            console.log("gv init, model:", this.model);
+            Logger.log("gv init, model:", this.model);
 //            this.on("all", function(event) {
-//                console.log("gv", event);
+//                Logger.log("gv", event);
 //            });
             this.model.on("all", function(event) {
-                console.log("gv model event:", event);
+                Logger.log("gv model event:", event);
                 this.render();
             }.bind(this));
             this.imageViews = {};
@@ -20,7 +20,7 @@ define(["gallery", "imageview"], function(Gallery, ImageView) {
         },
         render: render,
         setShowSelected: function(b) {
-            console.log("gv setShowSelected", b);
+            Logger.log("gv setShowSelected", b);
             this.showSelected = b;
             this.render();
             this.trigger("change:showSelected");
@@ -31,7 +31,7 @@ define(["gallery", "imageview"], function(Gallery, ImageView) {
     });
 
     function render() {
-        console.log("gallery view render");
+        Logger.log("gallery view render");
         var el = this.el;
         // iterate over images
         var gallery = this.model;
@@ -68,7 +68,7 @@ define(["gallery", "imageview"], function(Gallery, ImageView) {
                     height: imageView.getHeight()
                 }
             });
-            console.log(imageSizes);
+            Logger.log(imageSizes);
             // stretch
             gridSize = getGridSize(gallerySize, imageSizes);
             var tileSize = getTileSize(gallerySize, gridSize);
@@ -101,10 +101,12 @@ define(["gallery", "imageview"], function(Gallery, ImageView) {
         
         var isRedrawRequired = !isSame(this.oldDisplaySettings, displaySettings);
         if (!isRedrawRequired) {
+            Logger.log("gallery view. render unnecessary");
             return;
         }
         this.oldDisplaySettings = displaySettings;
         
+        Logger.log("clear gallery view");
         el.innerHTML = "";
         var currentRowIndex = -1;
         var row;
@@ -157,7 +159,7 @@ define(["gallery", "imageview"], function(Gallery, ImageView) {
                     var imageSize = getStretchedSize(size, tileSize);
                     usedSize += imageSize.width * imageSize.height;
                 });
-                console.log(gridWidth, gridHeight, usedSize);
+                Logger.log(gridWidth, gridHeight, usedSize);
                 if (!maxUsedSize || usedSize > maxUsedSize) {
                     bestGridSize = gridSize;
                     maxUsedSize = usedSize;
