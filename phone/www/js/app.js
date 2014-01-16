@@ -32,10 +32,10 @@ var links =
 
 document.addEventListener("DOMContentLoaded", function(event) {
     console.log("DOM fully loaded and parsed");
-    initialize();
+    require(["logger"], initialize);
 });
 
-function initialize() {
+function initialize(Logger) {
     selectBtn = document.getElementById(selectBtnID);
     
     selectBtn.addEventListener("click", function() {
@@ -47,6 +47,17 @@ function initialize() {
             resetFlag(gallery.get("selectedImages"), "isSelected");
             resetFlag(gallery.get("favoriteImages"), "isFavorite");
         }
+        
+//        // should only add once.
+//        if (showSelected) {
+//            // Listen to pinch, scale the image when in Show Selected mode
+//            Logger.log("pinch listening");
+//            Hammer(galleryView.el, {prevent_default:true}).on("pinch", onPinch);
+//        }
+//        else {
+//            Logger.log("stop pinch listening");
+//            Hammer(galleryView.el, {prevent_default:true}).off("pinch", onPinch);
+//        }
     });
     
     keepBtn = document.getElementById(keepBtnID);
@@ -74,9 +85,11 @@ function initialize() {
     
     require(["gallery", "galleryview", "image", "logger"], function(Gallery, GalleryView, Image, Logger) {
         var logsBtn = document.getElementById(logsBtnId);
-        logsBtn.addEventListener("click", function() {
-            Logger.showAll();
-        });
+        if (logsBtn) {
+            logsBtn.addEventListener("click", function() {
+                Logger.showAll();
+            });
+        }
 
         Logger.log("initializing gallery");
         var container = document.getElementById(containerID);
@@ -159,14 +172,6 @@ function updateKeepButtonState(gallery) {
     var favoriteImages = gallery.get("favoriteImages");
     var keepBtnEnabled = favoriteImages.length > 0;
     keepBtn.disabled = !keepBtnEnabled;
-    
-    if (keepBtnEnabled) {
-        // Listen to pinch, scale the image when in Show Selected mode
-        Hammer(gv.el, {prevent_default:true}).on("pinch", onPinch);
-    }
-    else {
-        Hammer(gv.el, {prevent_default:true}).off("pinch", onPinch);
-    }
 }
 
 function onPinch(event) {
