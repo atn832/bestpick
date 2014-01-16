@@ -49,7 +49,7 @@ input:last-of-type {
 }
 
 #status {
-    display: none;
+/*    display: none;*/
     position:fixed;
     top: 0;
     left: 0;

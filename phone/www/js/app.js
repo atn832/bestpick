@@ -10,6 +10,10 @@ var galleryView;
 
 var links =
     [
+    "img/SAM_1615.JPG",
+    "img/SAM_1616.JPG",
+    "img/SAM_1617.JPG",
+    "img/SAM_1618.JPG",
     "img/SAM_1640.JPG",
     "img/SAM_1641.JPG",
     "img/SAM_1642.JPG",
@@ -116,12 +120,7 @@ function initialize() {
                 }
             }
         });
-        
-        // Listen to pinch, scale the image when in Show Selected mode
-//        Hammer(gv.el, {prevent_default:true}).on("pinch", function(event) {
-//            Logger.log("pinch " + event.gesture.scale);
-//        });
-        
+                
         // listener to selected images
         g.on("add:selectedImages remove:selectedImages reset:selectedImages", function() {
             updateSelectButtonState(g, gv);
@@ -158,9 +157,22 @@ function updateSelectButtonState() {
 function updateKeepButtonState(gallery) {
 //    console.log("updateKeepButtonState");
     var favoriteImages = gallery.get("favoriteImages");
-    keepBtn.disabled = favoriteImages.length == 0;
+    var keepBtnEnabled = favoriteImages.length > 0;
+    keepBtn.disabled = !keepBtnEnabled;
+    
+    if (keepBtnEnabled) {
+        // Listen to pinch, scale the image when in Show Selected mode
+        Hammer(gv.el, {prevent_default:true}).on("pinch", onPinch);
+    }
+    else {
+        Hammer(gv.el, {prevent_default:true}).off("pinch", onPinch);
+    }
 }
 
+function onPinch(event) {
+    Logger.log("pinch " + event.gesture.scale);
+}
+                                                 
 function resetFlag(collection, flagname) {
     var items = collection.slice();
     items.forEach(function(item) {

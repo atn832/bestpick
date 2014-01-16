@@ -1,4 +1,4 @@
-define(["logger"], function(Logger) {
+define(["logger", "q"], function(Logger, Q) {
     var ImageView = Backbone.View.extend({
         tagName: "img",
         className: "galleryImage",
@@ -88,6 +88,24 @@ define(["logger"], function(Logger) {
         },
         getHeight: function() {
             return this.height;
+        },
+        getTransformation: function() {
+            return this.transformation;
+        },
+        setTransformation: function(t) {
+            this.transformation = t;
+        },
+        /**
+        * @returns {Rectangle} bounds
+        **/
+        getBounds: function() {
+            return this.bounds;
+        },
+        /**
+        * @param {Rectangle} b bounds
+        **/
+        setBounds: function(b) {
+            this.bounds = b;
         }
     });
     
