@@ -1,6 +1,6 @@
 define(["logger", "q"], function(Logger, Q) {
     var ImageView = Backbone.View.extend({
-        tagName: "img",
+        tagName: "span",
         className: "galleryImage",
         initialize: function() {
 //            this.listenTo(this.model, "change", this.render);
@@ -10,17 +10,8 @@ define(["logger", "q"], function(Logger, Q) {
             }.bind(this));
             
             var instance = this;
-            this.el.onload = function() {
-//                Logger.log("image loaded");
-                instance.width = this.width;
-                instance.height = this.height;
-                resizeImage(instance.el, instance.getWidth(), instance.getHeight());
-            };
-                // why doesn't listening to onload this way work?
-//                this.el.addEventListener("onload", function() {
-//                    // update width and height
-//                    Logger.log("image finished loading", this, this.width, this.height);
-//                });
+            this.el = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            
             this.render();
         },
         render: function() {
@@ -31,12 +22,12 @@ define(["logger", "q"], function(Logger, Q) {
                 
                 if (this.url !== image.get("url")) {
                     this.url = image.get("url");
-                    this.fullResImg = document.createElement("img");
-                    this.fullResImg.src = image.get("url");
-                    this.fullResImg.onload = function() {
-                        Logger.log("full res loaded");
-                        resizeImage(instance.fullResImg, instance.el, instance.getMaxWidth(), Number.POSITIVE_INFINITY);
-                    }
+                    console.log("setting url", this.url);
+                    this.el.setAttributeNS('http://www.w3.org/1999/xlink','href', this.url);
+                    this.el.setAttribute("x", "0");
+                    this.el.setAttribute("y", "0");
+                    this.el.setAttribute("width", "100");
+                    this.el.setAttribute("height", "100");
                 }
                 
                 if (this.el.model !== image) {
@@ -68,6 +59,8 @@ define(["logger", "q"], function(Logger, Q) {
                     }
                 }
             }
+//            if (this.el.parentNode)
+//                this.el.parentNode.appendChild(this.image);
         },
         getMaxWidth: function() {
             return this.maxWidth;
@@ -80,7 +73,7 @@ define(["logger", "q"], function(Logger, Q) {
             this.el.style.width = width + "px";
             
             // resize the displayed image
-            resizeImage(this.fullResImg, this.el, width, Number.POSITIVE_INFINITY);
+//            resizeImage(this.fullResImg, this.el, width, Number.POSITIVE_INFINITY);
         },
         // returns the current size, not the max one...
         getWidth: function() {

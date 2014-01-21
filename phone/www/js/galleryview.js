@@ -11,6 +11,12 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
                 this.render();
             }.bind(this));
             this.imageViews = {};
+            
+            this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            this.svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+            this.svg.setAttribute("version", "1.1");
+            this.el.appendChild(this.svg);
+            
             if (this.model) {
                 this.render();
             }
@@ -30,6 +36,10 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
     function render() {
         Logger.log("gallery view render");
         var el = this.el;
+        
+        this.svg.setAttribute("width", "100%");
+        this.svg.setAttribute("height", "100%");
+        
         // iterate over images
         var gallery = this.model;
         var showSelected = this.isShowSelected();
@@ -107,19 +117,26 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
         el.innerHTML = "";
         var currentRowIndex = -1;
         var row;
+        var rowHeight = gallerySize.height / gridSize.height;
+        var colWidth = 150;//gallerySize.width / gridSize.width;
+        
         viewsToDisplay.forEach(function(imageView, index) {
             var rowIndex = Math.floor(index / gridSize.width);
-            if (rowIndex > currentRowIndex) {
-                row = document.createElement("div");
-                el.appendChild(row);
-                currentRowIndex = rowIndex;
-            }
+            var colIndex = index % gridSize.width;
             
             if (imageView.el.parentNode) {
                 imageView.el.parentNode.removeChild(imageView.el);
             }
-            row.appendChild(imageView.el);
-        });
+//            row.appendChild(imageView.el);
+            imageView.el.setAttribute("x", "0");
+            var x = colIndex * colWidth;
+            var y = rowIndex * rowHeight;
+            
+            imageView.el.setAttribute("x", (colIndex * colWidth) + "");
+            imageView.el.setAttribute("y", (rowIndex * rowHeight) + "");
+            this.svg.appendChild(imageView.el);
+        }.bind(this));
+        this.el.appendChild(this.svg);
     }
     
     function getImageElement(image) {
