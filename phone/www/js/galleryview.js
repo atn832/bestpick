@@ -122,11 +122,18 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
         el.innerHTML = "";
         var latestRowIndex = -1;
         var row;
-        var rowHeight = StandardTileSize; //gallerySize.height / gridSize.height;
-        var colWidth = StandardTileSize;//gallerySize.width / gridSize.width;
-        
+        var rowHeight;
+        var colWidth;
+        if (showSelected) {
+            rowHeight = gallerySize.height / gridSize.height;
+            colWidth = gallerySize.width / gridSize.width;
+        }
+        else {
+            rowHeight = StandardTileSize;
+            colWidth = StandardTileSize;
+        }
+        this.svg.innerHTML = "";
         viewsToDisplay.forEach(function(imageView, index) {
-            Logger.log("grid size" + gridSize);
             var rowIndex = Math.floor(index / gridSize.width);
             var colIndex = index % gridSize.width;
             latestRowIndex = rowIndex;
@@ -142,10 +149,14 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
             imageView.el.setAttribute("y", (rowIndex * rowHeight) + "");
             this.svg.appendChild(imageView.el);
         }.bind(this));
+        
         var minGalleryHeight = latestRowIndex * StandardTileSize + StandardTileSize;
         Logger.log("mingalleryheight" + minGalleryHeight + " " + gallerySize.height);
         if (minGalleryHeight > gallerySize.height) {
             this.svg.setAttribute("height", minGalleryHeight);
+        }
+        else {
+            this.svg.setAttribute("height", "100%");
         }
         this.el.appendChild(this.svg);
     }
@@ -190,9 +201,6 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
                     maxUsedSize = usedSize;
                 }
             }
-        }
-        if (!bestGridSize) {
-            debugger;
         }
         return bestGridSize;
     }

@@ -28,6 +28,14 @@ define(["logger", "q"], function(Logger, Q) {
                     this.el.setAttribute("y", "0");
                     this.el.setAttribute("width", "100");
                     this.el.setAttribute("height", "100");
+                    
+                    var img = document.createElement("img");
+                    img.onload = function() {
+                        Logger.log("image size" + img.width);
+                        instance.width = img.width;
+                        instance.height = img.height;
+                    };
+                    img.src = this.url;
                 }
                 
                 if (this.el.model !== image) {
@@ -41,10 +49,14 @@ define(["logger", "q"], function(Logger, Q) {
                     this.selected = image.get("isSelected");
                     if (image.get("isSelected")) {
                         Logger.log("add is selected class");
-                        $(this.el).addClass("selected");
+                        // todo: replace hardcoded opacity attribute
+                        // by css class
+//                        $(this.el).addClass("selected");
+                        this.el.setAttribute("opacity", ".5");
                     }
                     else {
-                        $(this.el).removeClass("selected");
+//                        $(this.el).removeClass("selected");
+                        this.el.setAttribute("opacity", "1");
                     }
                 }
                 
@@ -52,10 +64,14 @@ define(["logger", "q"], function(Logger, Q) {
                     Logger.log("update isfavorite");
                     this.favorite = image.get("isFavorite");
                     if (image.get("isFavorite")) {
-                        $(this.el).addClass("favorite");
+                        // todo: replace hardcoded opacity attribute
+                        // by css class
+//                        $(this.el).addClass("favorite");
+                        this.el.setAttribute("opacity", "1");
                     }
                     else {
-                        $(this.el).removeClass("favorite");
+//                        $(this.el).removeClass("favorite");
+                        this.el.setAttribute("opacity", ".5");
                     }
                 }
             }
