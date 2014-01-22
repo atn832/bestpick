@@ -163,6 +163,14 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
     }
     
     function zoom(s) {
+        if (!this.oldDisplaySettings ||
+            !this.oldDisplaySettings.displayedImages)
+            return;
+        
+        var transform = "matrix(" + s + ", 0, 0, " + s + ", 0, 0)";
+        this.oldDisplaySettings.displayedImages.forEach(function(image) {
+            image.setTransformation(transform + " " + image.getTransformation());
+        });
     }
     
     function getImageElement(image) {

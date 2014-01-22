@@ -11,6 +11,7 @@ define(["logger", "q"], function(Logger, Q) {
             
             var instance = this;
             this.el = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            this.transformation = "";
             
             this.render();
         },
@@ -31,7 +32,6 @@ define(["logger", "q"], function(Logger, Q) {
                     
                     var img = document.createElement("img");
                     img.onload = function() {
-                        Logger.log("image size" + img.width);
                         instance.width = img.width;
                         instance.height = img.height;
                     };
@@ -107,6 +107,11 @@ define(["logger", "q"], function(Logger, Q) {
         setTransformation: function(t) {
             this.transformation = t;
             this.el.setAttribute("transform", t);
+
+            var consolidatedTransform = this.el.transform.baseVal.consolidate();
+            var m = consolidatedTransform.matrix;
+            var strmatrix = "matrix(" + m.a + ", " + m.c + ", " + m.b + ", " + m.d + ", " + m.e + ", " + m.f + ")";
+            this.el.setAttribute("transform", strmatrix);
         },
         /**
         * @returns {Rectangle} bounds
