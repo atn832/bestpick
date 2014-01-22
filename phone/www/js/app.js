@@ -114,6 +114,10 @@ function initialize(Logger) {
         galleryView = gv;
         
         container.appendChild(gv.el);
+        // todo: make gv listen to events so it can rerender
+        // itself when added to a new parent
+        gv.render();
+        
         // put listeners on to images:
         // if touch on it, toggle
         Hammer(gv.el).on("tap", function(event) {

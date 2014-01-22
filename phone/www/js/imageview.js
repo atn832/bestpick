@@ -62,15 +62,18 @@ define(["logger", "q"], function(Logger, Q) {
 //            if (this.el.parentNode)
 //                this.el.parentNode.appendChild(this.image);
         },
-        getMaxWidth: function() {
-            return this.maxWidth;
+        getSize: function() {
+            return this.size;
         },
-        setMaxWidth: function(width) {
-            if (this.maxWidth === width)
+        setSize: function(size) {
+            if (this.size &&
+                this.size.width === size.width &&
+                this.size.height === size.height)
                 return;
             
-            this.maxWidth = width;
-            this.el.style.width = width + "px";
+            this.size = size;
+            this.el.setAttribute("width", size.width + "");
+            this.el.setAttribute("height", size.height + "");
             
             // resize the displayed image
 //            resizeImage(this.fullResImg, this.el, width, Number.POSITIVE_INFINITY);
@@ -101,29 +104,6 @@ define(["logger", "q"], function(Logger, Q) {
             this.bounds = b;
         }
     });
-    
-    function resizeImage(srcImageObject, dstImageObject, width, height) {
-        Logger.log("resizeImage" + width + "," + height);
-        var newWidth = width;
-        var newHeight = height;
-    
-        // Calculate a new scale
-        // The new scale will be the minimum of the two possible scales
-        var scale = Math.min((newWidth / srcImageObject.width), (newHeight / srcImageObject.height));
-        Logger.log("scale" + scale);
-        
-        // New canvas
-        var dst_canvas = document.createElement('canvas');
-        dst_canvas.width = srcImageObject.width * scale;
-        dst_canvas.height = srcImageObject.height * scale;
-    
-        // Draw Image content in canvas
-        var dst_ctx = dst_canvas.getContext('2d');
-        dst_ctx.drawImage(srcImageObject, 0, 0, parseInt(srcImageObject.width * scale), parseInt(srcImageObject.height * scale));
-    
-        // Replace source of Image
-        dstImageObject.src = dst_canvas.toDataURL();
-    }
     
     return ImageView;
 });

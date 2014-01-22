@@ -1,5 +1,6 @@
 define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) {
     var cssBorderWidth = 4;
+    var StandardTileSize = 100;
     
     var GalleryView = Backbone.View.extend({
         tagName: "div",
@@ -67,8 +68,10 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
                 width: 0,
                 height: 0
             }
+            return;
         }
         if (showSelected) {
+            // respect ratio, fit to screen
             var imageSizes = viewsToDisplay.map(function(imageView) {
                 return {
                     width: imageView.getWidth(),
@@ -86,18 +89,19 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
                     height: imageView.height
                 };
                 var stretchedSize = getStretchedSize(imageSize, tileSize);
-                imageView.setMaxWidth(stretchedSize.width);
+                imageView.setSize(stretchedSize);
             });
         }
         else {
+            // fixed tile size
             gridSize = {
-                width: Number.POSITIVE_INFINITY,
+                width: Math.floor(gallerySize.width / StandardTileSize),
                 height: 1
             };
             
             // restore hard coded size. should match the css's
             viewsToDisplay.forEach(function(imageView) {
-                imageView.setMaxWidth(100);
+                imageView.setSize({width: StandardTileSize, height: StandardTileSize});
             });
         }
         var displaySettings = {
@@ -114,21 +118,23 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
         this.oldDisplaySettings = displaySettings;
         
         Logger.log("clear gallery view");
+        Logger.log("grid size" + gridSize);
         el.innerHTML = "";
-        var currentRowIndex = -1;
+        var latestRowIndex = -1;
         var row;
-        var rowHeight = gallerySize.height / gridSize.height;
-        var colWidth = 150;//gallerySize.width / gridSize.width;
+        var rowHeight = StandardTileSize; //gallerySize.height / gridSize.height;
+        var colWidth = StandardTileSize;//gallerySize.width / gridSize.width;
         
         viewsToDisplay.forEach(function(imageView, index) {
+            Logger.log("grid size" + gridSize);
             var rowIndex = Math.floor(index / gridSize.width);
             var colIndex = index % gridSize.width;
+            latestRowIndex = rowIndex;
             
             if (imageView.el.parentNode) {
                 imageView.el.parentNode.removeChild(imageView.el);
             }
 //            row.appendChild(imageView.el);
-            imageView.el.setAttribute("x", "0");
             var x = colIndex * colWidth;
             var y = rowIndex * rowHeight;
             
@@ -136,6 +142,11 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
             imageView.el.setAttribute("y", (rowIndex * rowHeight) + "");
             this.svg.appendChild(imageView.el);
         }.bind(this));
+        var minGalleryHeight = latestRowIndex * StandardTileSize + StandardTileSize;
+        Logger.log("mingalleryheight" + minGalleryHeight + " " + gallerySize.height);
+        if (minGalleryHeight > gallerySize.height) {
+            this.svg.setAttribute("height", minGalleryHeight);
+        }
         this.el.appendChild(this.svg);
     }
     
