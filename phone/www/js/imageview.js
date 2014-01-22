@@ -106,6 +106,7 @@ define(["logger", "q"], function(Logger, Q) {
         },
         setTransformation: function(t) {
             this.transformation = t;
+            this.el.setAttribute("transform", t);
         },
         /**
         * @returns {Rectangle} bounds

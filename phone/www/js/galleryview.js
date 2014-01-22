@@ -1,4 +1,4 @@
-define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) {
+define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logger, Gallery, ImageView, GalleryViewSettings) {
     var cssBorderWidth = 4;
     var StandardTileSize = 100;
     
@@ -31,7 +31,8 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
         },
         isShowSelected: function() {
             return this.showSelected;
-        }
+        },
+        zoom: zoom
     });
 
     function render() {
@@ -159,6 +160,9 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
             this.svg.setAttribute("height", "100%");
         }
         this.el.appendChild(this.svg);
+    }
+    
+    function zoom(s) {
     }
     
     function getImageElement(image) {

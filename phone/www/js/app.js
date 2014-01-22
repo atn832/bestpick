@@ -1,9 +1,13 @@
 var containerID = "container";
 var selectBtnID = "btnSelect";
 var keepBtnID = "btnKeep";
-var logsBtnId = "btnLogs";
+var logsBtnID = "btnLogs";
+var zoomInBtnID = "btnZoomIn";
+var zoomOutBtnID = "btnZoomOut";
 var selectBtn;
 var keepBtn;
+var zoomInBtn;
+var zoomOutBtn;
 
 var gallery;
 var galleryView;
@@ -84,12 +88,22 @@ function initialize(Logger) {
     });
     
     require(["gallery", "galleryview", "image", "logger"], function(Gallery, GalleryView, Image, Logger) {
-        var logsBtn = document.getElementById(logsBtnId);
+        var logsBtn = document.getElementById(logsBtnID);
         if (logsBtn) {
             logsBtn.addEventListener("click", function() {
                 Logger.showAll();
             });
         }
+        
+        zoomInBtn = document.getElementById(zoomInBtnID);
+        zoomOutBtn = document.getElementById(zoomOutBtnID);
+        var ratio = 1.1;
+        zoomInBtn.addEventListener("click", function() {
+            galleryView.zoom(ratio);
+        });
+        zoomOutBtn.addEventListener("click", function() {
+            galleryView.zoom(1/ratio);
+        });
 
         Logger.log("initializing gallery");
         var container = document.getElementById(containerID);
@@ -169,13 +183,17 @@ function updateSelectButtonState() {
     selectBtn.disabled = selectedImages.length == 0;
     var showSelected = galleryView.isShowSelected();
     selectBtn.value = showSelected? "View All": "Select";
+    
+    zoomInBtn.disabled = !showSelected;
+    zoomOutBtn.disabled = !showSelected;
 }
 
 function updateKeepButtonState(gallery) {
 //    console.log("updateKeepButtonState");
     var favoriteImages = gallery.get("favoriteImages");
     var keepBtnEnabled = favoriteImages.length > 0;
-    keepBtn.disabled = !keepBtnEnabled;
+    var keepBtnDisabled = !keepBtnEnabled;
+    keepBtn.disabled = keepBtnDisabled;
 }
 
 function onPinch(event) {
