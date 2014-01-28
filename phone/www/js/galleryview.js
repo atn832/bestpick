@@ -157,7 +157,6 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
         }.bind(this));
         
         var minGalleryHeight = latestRowIndex * StandardTileSize + StandardTileSize;
-        Logger.log("mingalleryheight" + minGalleryHeight + " " + gallerySize.height);
         if (minGalleryHeight > gallerySize.height) {
             this.svg.setAttribute("height", minGalleryHeight);
         }
@@ -168,7 +167,20 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
     }
     
     function zoom(s) {
-        this.prepend("matrix(" + s + ", 0, 0, " + s + ", 0, 0)");
+        if (!this.oldDisplaySettings ||
+            !this.oldDisplaySettings.displayedImages)
+            return;
+        
+        this.oldDisplaySettings.displayedImages.forEach(function(image) {
+            var size = image.getSize();
+            var cx = size.width / 2;
+            var cy = size.height / 2;
+            var translateMinusC = "translate(" + -cx + ", " + -cy + ")";
+            var translateC = "translate(" + cx + ", " + cy + ")";
+            image.setTransformation(translateC +
+                         " matrix(" + s + ", 0, 0, " + s + ", 0, 0) " +
+                         translateMinusC + " " + image.getTransformation());
+        });
     }
     
     function translate(dx, dy) {
