@@ -141,7 +141,11 @@ define(["logger", "q"], function(Logger, Q) {
             this.image.setAttribute("transform", t);
 
             var consolidatedTransform = this.image.transform.baseVal.consolidate();
+            // returns null when transform is empty
+            if (!consolidatedTransform)
+                return;
             var m = consolidatedTransform.matrix;
+            
             var strmatrix = "matrix(" + m.a + ", " + m.c + ", " + m.b + ", " + m.d + ", " + m.e + ", " + m.f + ")";
             this.image.setAttribute("transform", strmatrix);
         },

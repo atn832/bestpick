@@ -32,7 +32,11 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
         isShowSelected: function() {
             return this.showSelected;
         },
-        zoom: zoom
+        zoom: zoom,
+        translate: translate,
+        prepend: prepend,
+        resetTransformation: resetTransformation,
+        setTransformation: setTransformation
     });
 
     function render() {
@@ -132,6 +136,8 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
         else {
             rowHeight = StandardTileSize;
             colWidth = StandardTileSize;
+            // reset scale and translation in displayed tiles
+            this.resetTransformation();
         }
         this.svg.innerHTML = "";
         viewsToDisplay.forEach(function(imageView, index) {
@@ -162,14 +168,37 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
     }
     
     function zoom(s) {
+        this.prepend("matrix(" + s + ", 0, 0, " + s + ", 0, 0)");
+    }
+    
+    function translate(dx, dy) {
+        this.prepend("translate(" + dx + ", " + dy + ")");
+    }
+    /**
+    * Prepends a SVG transformation to all the displayed images
+    **/
+    function prepend(transformation) {
         if (!this.oldDisplaySettings ||
             !this.oldDisplaySettings.displayedImages)
             return;
         
-        var transform = "matrix(" + s + ", 0, 0, " + s + ", 0, 0)";
         this.oldDisplaySettings.displayedImages.forEach(function(image) {
-            image.setTransformation(transform + " " + image.getTransformation());
+            image.setTransformation(transformation + " " + image.getTransformation());
         });
+    }
+    
+    function setTransformation(transformation) {
+        if (!this.oldDisplaySettings ||
+            !this.oldDisplaySettings.displayedImages)
+            return;
+        
+        this.oldDisplaySettings.displayedImages.forEach(function(image) {
+            image.setTransformation(transformation);
+        });
+    }
+    
+    function resetTransformation() {
+        this.setTransformation("");
     }
     
     function getImageElement(image) {

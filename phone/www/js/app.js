@@ -151,6 +151,23 @@ function initialize(Logger) {
                 }
             }
         });
+        
+        var lastDragCenter;
+        
+        Hammer(gv.el).on("dragstart", function(event) {
+            lastDragCenter = event.gesture.center;
+        });
+        
+        Hammer(gv.el).on("drag", function(event) {
+            if (!gv.isShowSelected())
+                return;
+            
+            var newCenter = event.gesture.center;
+            var dx = newCenter.pageX - lastDragCenter.pageX;
+            var dy = newCenter.pageY - lastDragCenter.pageY;
+            gv.translate(dx, dy);
+            lastDragCenter = newCenter;
+        });
                 
         // listener to selected images
         g.on("add:selectedImages remove:selectedImages reset:selectedImages", function() {
