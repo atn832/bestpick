@@ -146,8 +146,7 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
             var x = colIndex * colWidth;
             var y = rowIndex * rowHeight;
             
-            imageView.el.setAttribute("x", (colIndex * colWidth) + "");
-            imageView.el.setAttribute("y", (rowIndex * rowHeight) + "");
+            imageView.el.setAttribute("transform", "translate(" + (colIndex * colWidth) + ", " + (rowIndex * rowHeight) + ")");
             this.svg.appendChild(imageView.el);
         }.bind(this));
         

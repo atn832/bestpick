@@ -8,9 +8,36 @@ define(["logger", "q"], function(Logger, Q) {
 //                Logger.log("iv model changed", event);
                 this.render();
             }.bind(this));
+
+            /*
+                the DOM will look like this:
+                <g transform="translate(...)">
+                    <clipPath id=clipID>
+                        <rect .../>
+                    </clipPath>
+                    <g clip-path=url(clipID)>
+                        <image transform="matrix(...)">
+                    </g>
+                </g>
+            */
             
             var instance = this;
-            this.el = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            this.el = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            this.g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            this.clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+            this.clipID = _.uniqueId("clip");
+            this.clipPath.setAttribute("id", this.clipID);
+            
+            this.clipRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            this.clipRect.setAttribute("x" , "0");
+            this.clipRect.setAttribute("y" , "0");
+            
+            this.image = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            this.g.setAttribute("clip-path", "url(#" + this.clipID + ")");
+            this.clipPath.appendChild(this.clipRect);
+            this.g.appendChild(this.image);
+            this.el.appendChild(this.clipPath);
+            this.el.appendChild(this.g);
             this.transformation = "";
             
             this.render();
@@ -24,11 +51,14 @@ define(["logger", "q"], function(Logger, Q) {
                 if (this.url !== image.get("url")) {
                     this.url = image.get("url");
                     console.log("setting url", this.url);
-                    this.el.setAttributeNS('http://www.w3.org/1999/xlink','href', this.url);
-                    this.el.setAttribute("x", "0");
-                    this.el.setAttribute("y", "0");
-                    this.el.setAttribute("width", "100");
-                    this.el.setAttribute("height", "100");
+                    this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', this.url);
+                    this.image.setAttribute("x", "0");
+                    this.image.setAttribute("y", "0");
+                    this.image.setAttribute("width", "100");
+                    this.image.setAttribute("height", "100");
+                    // not necessary until zoomed in
+                    this.clipRect.setAttribute("width", "100");
+                    this.clipRect.setAttribute("height", "100");
                     
                     var img = document.createElement("img");
                     img.onload = function() {
@@ -40,7 +70,7 @@ define(["logger", "q"], function(Logger, Q) {
                 
                 if (this.el.model !== image) {
 //                    Logger.log("update image view model");
-                    this.el.model = image;
+                    this.image.model = image;
                 }
                 
                 if (this.selected !== image.get("isSelected"))
@@ -88,8 +118,10 @@ define(["logger", "q"], function(Logger, Q) {
                 return;
             
             this.size = size;
-            this.el.setAttribute("width", size.width + "");
-            this.el.setAttribute("height", size.height + "");
+            this.image.setAttribute("width", size.width + "");
+            this.image.setAttribute("height", size.height + "");
+            this.clipRect.setAttribute("width", size.width + "");
+            this.clipRect.setAttribute("height", size.height + "");
             
             // resize the displayed image
 //            resizeImage(this.fullResImg, this.el, width, Number.POSITIVE_INFINITY);
@@ -106,12 +138,12 @@ define(["logger", "q"], function(Logger, Q) {
         },
         setTransformation: function(t) {
             this.transformation = t;
-            this.el.setAttribute("transform", t);
+            this.image.setAttribute("transform", t);
 
-            var consolidatedTransform = this.el.transform.baseVal.consolidate();
+            var consolidatedTransform = this.image.transform.baseVal.consolidate();
             var m = consolidatedTransform.matrix;
             var strmatrix = "matrix(" + m.a + ", " + m.c + ", " + m.b + ", " + m.d + ", " + m.e + ", " + m.f + ")";
-            this.el.setAttribute("transform", strmatrix);
+            this.image.setAttribute("transform", strmatrix);
         },
         /**
         * @returns {Rectangle} bounds
