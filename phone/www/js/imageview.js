@@ -1,6 +1,6 @@
 define(["logger", "q"], function(Logger, Q) {
     var ImageView = Backbone.View.extend({
-        tagName: "img",
+        tagName: "span",
         className: "galleryImage",
         initialize: function() {
 //            this.listenTo(this.model, "change", this.render);
@@ -8,19 +8,43 @@ define(["logger", "q"], function(Logger, Q) {
 //                Logger.log("iv model changed", event);
                 this.render();
             }.bind(this));
+
+            /*
+                the DOM will look like this:
+                <g transform="translate(...)">
+                    <clipPath id=clipID>
+                        <rect .../>
+                    </clipPath>
+                    <g clip-path=url(clipID)>
+                        <image transform="matrix(...)">
+                    </g>
+                </g>
+            */
             
             var instance = this;
-            this.el.onload = function() {
-//                Logger.log("image loaded");
-                instance.width = this.width;
-                instance.height = this.height;
-                resizeImage(instance.el, instance.getWidth(), instance.getHeight());
-            };
-                // why doesn't listening to onload this way work?
-//                this.el.addEventListener("onload", function() {
-//                    // update width and height
-//                    Logger.log("image finished loading", this, this.width, this.height);
-//                });
+            this.el = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            this.g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            this.tileRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            this.tileRect.setAttribute("x", "0");
+            this.tileRect.setAttribute("y", "0");
+            
+            this.clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+            this.clipID = _.uniqueId("clip");
+            this.clipPath.setAttribute("id", this.clipID);
+            
+            this.clipRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            this.clipRect.setAttribute("x" , "0");
+            this.clipRect.setAttribute("y" , "0");
+            
+            this.image = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            this.g.setAttribute("clip-path", "url(#" + this.clipID + ")");
+            this.g.appendChild(this.image);
+            this.clipPath.appendChild(this.clipRect);
+            this.el.appendChild(this.tileRect);
+            this.el.appendChild(this.clipPath);
+            this.el.appendChild(this.g);
+            this.transformation = "";
+            
             this.render();
         },
         render: function() {
@@ -29,58 +53,82 @@ define(["logger", "q"], function(Logger, Q) {
             if (image) {
                 var instance = this;
                 
+                var firstRender = false;
                 if (this.url !== image.get("url")) {
+                    firstRender = true;
                     this.url = image.get("url");
-                    this.fullResImg = document.createElement("img");
-                    this.fullResImg.src = image.get("url");
-                    this.fullResImg.onload = function() {
-                        Logger.log("full res loaded");
-                        resizeImage(instance.fullResImg, instance.el, instance.getMaxWidth(), Number.POSITIVE_INFINITY);
-                    }
+                    console.log("setting url", this.url);
+                    this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', this.url);
+                    this.image.setAttribute("x", "0");
+                    this.image.setAttribute("y", "0");
+                    this.image.setAttribute("width", "100");
+                    this.image.setAttribute("height", "100");
+                    // not necessary until zoomed in
+                    this.clipRect.setAttribute("width", "100");
+                    this.clipRect.setAttribute("height", "100");
+                    this.tileRect.setAttribute("width", "100");
+                    this.tileRect.setAttribute("height", "100");
+                    
+                    var img = document.createElement("img");
+                    img.onload = function() {
+                        instance.width = img.width;
+                        instance.height = img.height;
+                    };
+                    img.src = this.url;
                 }
                 
                 if (this.el.model !== image) {
 //                    Logger.log("update image view model");
-                    this.el.model = image;
+                    this.image.model = image;
                 }
                 
-                if (this.selected !== image.get("isSelected"))
+                var className = "tile ";
+                var classNameChanged = false;
+                // Note: as of Jan 2014, JQuery's addClass and removeClass
+                // will not support SVG
+                if (firstRender || this.selected !== image.get("isSelected"))
                 {
                     Logger.log("update isselected");
+                    classNameChanged = true;
                     this.selected = image.get("isSelected");
                     if (image.get("isSelected")) {
                         Logger.log("add is selected class");
-                        $(this.el).addClass("selected");
-                    }
-                    else {
-                        $(this.el).removeClass("selected");
+                        className += "selected ";
                     }
                 }
                 
-                if (this.favorite !== image.get("isFavorite")) {
+                if (firstRender || classNameChanged || this.favorite !== image.get("isFavorite")) {
+                    classNameChanged = true;
                     Logger.log("update isfavorite");
                     this.favorite = image.get("isFavorite");
                     if (image.get("isFavorite")) {
-                        $(this.el).addClass("favorite");
-                    }
-                    else {
-                        $(this.el).removeClass("favorite");
+                        className += "favorite ";
                     }
                 }
+                //Logger.log("classname:" + className);
+                if (classNameChanged || firstRender)
+                    this.tileRect.setAttribute("class", className);
             }
         },
-        getMaxWidth: function() {
-            return this.maxWidth;
+        getSize: function() {
+            return this.size;
         },
-        setMaxWidth: function(width) {
-            if (this.maxWidth === width)
+        setSize: function(size) {
+            if (this.size &&
+                this.size.width === size.width &&
+                this.size.height === size.height)
                 return;
             
-            this.maxWidth = width;
-            this.el.style.width = width + "px";
+            this.size = size;
+            this.image.setAttribute("width", size.width);
+            this.image.setAttribute("height", size.height);
+            this.clipRect.setAttribute("width", size.width);
+            this.clipRect.setAttribute("height", size.height);
+            this.tileRect.setAttribute("width", size.width);
+            this.tileRect.setAttribute("height", size.height);
             
             // resize the displayed image
-            resizeImage(this.fullResImg, this.el, width, Number.POSITIVE_INFINITY);
+//            resizeImage(this.fullResImg, this.el, width, Number.POSITIVE_INFINITY);
         },
         // returns the current size, not the max one...
         getWidth: function() {
@@ -94,6 +142,17 @@ define(["logger", "q"], function(Logger, Q) {
         },
         setTransformation: function(t) {
             this.transformation = t;
+            this.image.setAttribute("transform", t);
+
+            // merges the whole transformation chain into just one
+            var consolidatedTransform = this.image.transform.baseVal.consolidate();
+            // returns null when transform is empty
+            if (!consolidatedTransform)
+                return;
+            var m = consolidatedTransform.matrix;
+            
+            var strmatrix = "matrix(" + m.a + ", " + m.c + ", " + m.b + ", " + m.d + ", " + m.e + ", " + m.f + ")";
+            this.image.setAttribute("transform", strmatrix);
         },
         /**
         * @returns {Rectangle} bounds
@@ -108,29 +167,6 @@ define(["logger", "q"], function(Logger, Q) {
             this.bounds = b;
         }
     });
-    
-    function resizeImage(srcImageObject, dstImageObject, width, height) {
-        Logger.log("resizeImage" + width + "," + height);
-        var newWidth = width;
-        var newHeight = height;
-    
-        // Calculate a new scale
-        // The new scale will be the minimum of the two possible scales
-        var scale = Math.min((newWidth / srcImageObject.width), (newHeight / srcImageObject.height));
-        Logger.log("scale" + scale);
-        
-        // New canvas
-        var dst_canvas = document.createElement('canvas');
-        dst_canvas.width = srcImageObject.width * scale;
-        dst_canvas.height = srcImageObject.height * scale;
-    
-        // Draw Image content in canvas
-        var dst_ctx = dst_canvas.getContext('2d');
-        dst_ctx.drawImage(srcImageObject, 0, 0, parseInt(srcImageObject.width * scale), parseInt(srcImageObject.height * scale));
-    
-        // Replace source of Image
-        dstImageObject.src = dst_canvas.toDataURL();
-    }
     
     return ImageView;
 });

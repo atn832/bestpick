@@ -1,5 +1,6 @@
-define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) {
+define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logger, Gallery, ImageView, GalleryViewSettings) {
     var cssBorderWidth = 4;
+    var StandardTileSize = 100;
     
     var GalleryView = Backbone.View.extend({
         tagName: "div",
@@ -11,6 +12,12 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
                 this.render();
             }.bind(this));
             this.imageViews = {};
+            
+            this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            this.svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+            this.svg.setAttribute("version", "1.1");
+            this.el.appendChild(this.svg);
+            
             if (this.model) {
                 this.render();
             }
@@ -24,12 +31,22 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
         },
         isShowSelected: function() {
             return this.showSelected;
-        }
+        },
+        zoom: zoom,
+        translate: translate,
+        prepend: prepend,
+        resetTransformation: resetTransformation,
+        setTransformation: setTransformation,
+        getDisplayedImages: getDisplayedImages
     });
 
     function render() {
         Logger.log("gallery view render");
         var el = this.el;
+        
+        this.svg.setAttribute("width", "100%");
+        this.svg.setAttribute("height", "100%");
+        
         // iterate over images
         var gallery = this.model;
         var showSelected = this.isShowSelected();
@@ -57,8 +74,10 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
                 width: 0,
                 height: 0
             }
+            return;
         }
         if (showSelected) {
+            // respect ratio, fit to screen
             var imageSizes = viewsToDisplay.map(function(imageView) {
                 return {
                     width: imageView.getWidth(),
@@ -76,18 +95,19 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
                     height: imageView.height
                 };
                 var stretchedSize = getStretchedSize(imageSize, tileSize);
-                imageView.setMaxWidth(stretchedSize.width);
+                imageView.setSize(stretchedSize);
             });
         }
         else {
+            // fixed tile size
             gridSize = {
-                width: Number.POSITIVE_INFINITY,
+                width: Math.floor(gallerySize.width / StandardTileSize),
                 height: 1
             };
             
             // restore hard coded size. should match the css's
             viewsToDisplay.forEach(function(imageView) {
-                imageView.setMaxWidth(100);
+                imageView.setSize({width: StandardTileSize, height: StandardTileSize});
             });
         }
         var displaySettings = {
@@ -104,22 +124,82 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
         this.oldDisplaySettings = displaySettings;
         
         Logger.log("clear gallery view");
+        Logger.log("grid size" + gridSize);
         el.innerHTML = "";
-        var currentRowIndex = -1;
+        var latestRowIndex = -1;
         var row;
+        var rowHeight;
+        var colWidth;
+        if (showSelected) {
+            rowHeight = gallerySize.height / gridSize.height;
+            colWidth = gallerySize.width / gridSize.width;
+        }
+        else {
+            rowHeight = StandardTileSize;
+            colWidth = StandardTileSize;
+            // reset scale and translation in displayed tiles
+            this.resetTransformation();
+        }
+        this.svg.innerHTML = "";
         viewsToDisplay.forEach(function(imageView, index) {
             var rowIndex = Math.floor(index / gridSize.width);
-            if (rowIndex > currentRowIndex) {
-                row = document.createElement("div");
-                el.appendChild(row);
-                currentRowIndex = rowIndex;
-            }
+            var colIndex = index % gridSize.width;
+            latestRowIndex = rowIndex;
             
             if (imageView.el.parentNode) {
                 imageView.el.parentNode.removeChild(imageView.el);
             }
-            row.appendChild(imageView.el);
+//            row.appendChild(imageView.el);
+            var x = colIndex * colWidth;
+            var y = rowIndex * rowHeight;
+            
+            imageView.el.setAttribute("transform", "translate(" + (colIndex * colWidth) + ", " + (rowIndex * rowHeight) + ")");
+            this.svg.appendChild(imageView.el);
+        }.bind(this));
+        
+        var minGalleryHeight = latestRowIndex * StandardTileSize + StandardTileSize;
+        if (minGalleryHeight > gallerySize.height) {
+            this.svg.setAttribute("height", minGalleryHeight);
+        }
+        else {
+            this.svg.setAttribute("height", "100%");
+        }
+        this.el.appendChild(this.svg);
+    }
+    
+    function zoom(s) {
+        this.getDisplayedImages().forEach(function(image) {
+            var size = image.getSize();
+            var cx = size.width / 2;
+            var cy = size.height / 2;
+            var translateMinusC = "translate(" + -cx + ", " + -cy + ")";
+            var translateC = "translate(" + cx + ", " + cy + ")";
+            image.setTransformation(translateC +
+                         " matrix(" + s + ", 0, 0, " + s + ", 0, 0) " +
+                         translateMinusC + " " + image.getTransformation());
         });
+    }
+    
+    function translate(dx, dy) {
+        this.prepend("translate(" + dx + ", " + dy + ")");
+    }
+    /**
+    * Prepends a SVG transformation to all the displayed images
+    **/
+    function prepend(transformation) {
+        this.getDisplayedImages().forEach(function(image) {
+            image.setTransformation(transformation + " " + image.getTransformation());
+        });
+    }
+    
+    function setTransformation(transformation) {
+        this.getDisplayedImages().forEach(function(image) {
+            image.setTransformation(transformation);
+        });
+    }
+    
+    function resetTransformation() {
+        this.setTransformation("");
     }
     
     function getImageElement(image) {
@@ -163,9 +243,6 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
                 }
             }
         }
-        if (!bestGridSize) {
-            debugger;
-        }
         return bestGridSize;
     }
     
@@ -192,6 +269,14 @@ define(["logger", "gallery", "imageview"], function(Logger, Gallery, ImageView) 
         imageSize.width *= scale;
         imageSize.height *= scale;
         return imageSize;
+    }
+    
+    function getDisplayedImages() {
+        if (!this.oldDisplaySettings ||
+            !this.oldDisplaySettings.displayedImages)
+            return [];
+        
+        return this.oldDisplaySettings.displayedImages;
     }
 
     function isSame(displaySettings, oldDisplaySettings) {

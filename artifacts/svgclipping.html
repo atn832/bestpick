@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+    <title>svg clipping test</title>
+</head>
+<body>
+<?xml version="1.0"?>
+<svg width="120" height="120" 
+     viewPort="0 0 120 120" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+
+    <g>
+        <clipPath id="my%20Clip">
+            <rect x="0" y="0" width="70" height="70"/>
+        </clipPath>
+        <g clip-path="url(#my%20Clip)" transform="translate(50, 0)">
+            <circle cx="40" cy="30" r="40" transform="scale(2,2)"/>
+        </g>
+    </g>
+</svg>
+</body>

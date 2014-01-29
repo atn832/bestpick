@@ -8,6 +8,7 @@ define(function() {
             var d = new Date();
             var n = d.toLocaleTimeString();
             var log = n + ": " + message;
+            console.log(log);
             status.innerHTML = log;
             allLogs += log + "\n";
         },
