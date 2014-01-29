@@ -24,10 +24,6 @@ define(["logger", "q"], function(Logger, Q) {
             var instance = this;
             this.el = document.createElementNS("http://www.w3.org/2000/svg", "g");
             this.g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            this.tileRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            this.tileRect.setAttribute("x", "0");
-            this.tileRect.setAttribute("y", "0");
-            
             this.clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
             this.clipID = _.uniqueId("clip");
             this.clipPath.setAttribute("id", this.clipID);
@@ -36,13 +32,18 @@ define(["logger", "q"], function(Logger, Q) {
             this.clipRect.setAttribute("x" , "0");
             this.clipRect.setAttribute("y" , "0");
             
+            this.tileRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            this.tileRect.setAttribute("x", "0");
+            this.tileRect.setAttribute("y", "0");
+            this.tileRect.setAttribute("clip-path", "url(#" + this.clipID + ")");
+            
             this.image = document.createElementNS("http://www.w3.org/2000/svg", "image");
             this.g.setAttribute("clip-path", "url(#" + this.clipID + ")");
             this.g.appendChild(this.image);
             this.clipPath.appendChild(this.clipRect);
-            this.el.appendChild(this.tileRect);
             this.el.appendChild(this.clipPath);
             this.el.appendChild(this.g);
+            this.el.appendChild(this.tileRect);
             this.transformation = "";
             
             this.render();
@@ -53,9 +54,7 @@ define(["logger", "q"], function(Logger, Q) {
             if (image) {
                 var instance = this;
                 
-                var firstRender = false;
                 if (this.url !== image.get("url")) {
-                    firstRender = true;
                     this.url = image.get("url");
                     console.log("setting url", this.url);
                     this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', this.url);
@@ -83,31 +82,18 @@ define(["logger", "q"], function(Logger, Q) {
                 }
                 
                 var className = "tile ";
-                var classNameChanged = false;
                 // Note: as of Jan 2014, JQuery's addClass and removeClass
                 // will not support SVG
-                if (firstRender || this.selected !== image.get("isSelected"))
-                {
-                    Logger.log("update isselected");
-                    classNameChanged = true;
-                    this.selected = image.get("isSelected");
-                    if (image.get("isSelected")) {
-                        Logger.log("add is selected class");
-                        className += "selected ";
-                    }
-                }
+                if (image.get("isSelected"))
+                    className += "selected ";
+                if (image.get("isFavorite"))
+                    className += "favorite ";
                 
-                if (firstRender || classNameChanged || this.favorite !== image.get("isFavorite")) {
-                    classNameChanged = true;
-                    Logger.log("update isfavorite");
-                    this.favorite = image.get("isFavorite");
-                    if (image.get("isFavorite")) {
-                        className += "favorite ";
-                    }
-                }
                 //Logger.log("classname:" + className);
-                if (classNameChanged || firstRender)
+                if (className !== this.className) {
+                    this.className = className;
                     this.tileRect.setAttribute("class", className);
+                }
             }
         },
         getSize: function() {

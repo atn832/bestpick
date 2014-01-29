@@ -41,17 +41,15 @@ input:last-of-type {
 /* Image View style */
 .tile {
     stroke: black;
-    fill: lightgray;
+    fill: none;
 }
 
 .gallery .selected {
-    fill: white;
     stroke: green;
     stroke-width: 5;
 }
 
 .gallery .favorite {
-    fill: white;
     stroke: red;
     stroke-width: 5;
 }
