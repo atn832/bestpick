@@ -95,7 +95,7 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
                     height: imageView.height
                 };
                 var stretchedSize = getStretchedSize(imageSize, tileSize);
-                imageView.setSize(stretchedSize);
+                imageView.setSize(tileSize);
             });
         }
         else {
