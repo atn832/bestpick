@@ -38,19 +38,22 @@ input:last-of-type {
     height: 100%;
 }
 
-.galleryImage {
-    width: 100px;
-    height: auto;
-    
-    border: 2px solid black;
+/* Image View style */
+.tile {
+    stroke: black;
+    fill: lightgray;
 }
 
-.selected {
-    border: 2px solid green;
+.gallery .selected {
+    fill: white;
+    stroke: green;
+    stroke-width: 5;
 }
 
-.favorite {
-    border: 2px solid red;
+.gallery .favorite {
+    fill: white;
+    stroke: red;
+    stroke-width: 5;
 }
 
 #status {

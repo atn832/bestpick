@@ -24,6 +24,10 @@ define(["logger", "q"], function(Logger, Q) {
             var instance = this;
             this.el = document.createElementNS("http://www.w3.org/2000/svg", "g");
             this.g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            this.tileRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            this.tileRect.setAttribute("x", "0");
+            this.tileRect.setAttribute("y", "0");
+            
             this.clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
             this.clipID = _.uniqueId("clip");
             this.clipPath.setAttribute("id", this.clipID);
@@ -34,8 +38,9 @@ define(["logger", "q"], function(Logger, Q) {
             
             this.image = document.createElementNS("http://www.w3.org/2000/svg", "image");
             this.g.setAttribute("clip-path", "url(#" + this.clipID + ")");
-            this.clipPath.appendChild(this.clipRect);
             this.g.appendChild(this.image);
+            this.clipPath.appendChild(this.clipRect);
+            this.el.appendChild(this.tileRect);
             this.el.appendChild(this.clipPath);
             this.el.appendChild(this.g);
             this.transformation = "";
@@ -48,7 +53,9 @@ define(["logger", "q"], function(Logger, Q) {
             if (image) {
                 var instance = this;
                 
+                var firstRender = false;
                 if (this.url !== image.get("url")) {
+                    firstRender = true;
                     this.url = image.get("url");
                     console.log("setting url", this.url);
                     this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', this.url);
@@ -59,6 +66,8 @@ define(["logger", "q"], function(Logger, Q) {
                     // not necessary until zoomed in
                     this.clipRect.setAttribute("width", "100");
                     this.clipRect.setAttribute("height", "100");
+                    this.tileRect.setAttribute("width", "100");
+                    this.tileRect.setAttribute("height", "100");
                     
                     var img = document.createElement("img");
                     img.onload = function() {
@@ -73,37 +82,32 @@ define(["logger", "q"], function(Logger, Q) {
                     this.image.model = image;
                 }
                 
-                if (this.selected !== image.get("isSelected"))
+                var className = "tile ";
+                var classNameChanged = false;
+                // Note: as of Jan 2014, JQuery's addClass and removeClass
+                // will not support SVG
+                if (firstRender || this.selected !== image.get("isSelected"))
                 {
                     Logger.log("update isselected");
+                    classNameChanged = true;
                     this.selected = image.get("isSelected");
                     if (image.get("isSelected")) {
                         Logger.log("add is selected class");
-                        // todo: replace hardcoded opacity attribute
-                        // by css class
-//                        $(this.el).addClass("selected");
-                        this.el.setAttribute("opacity", ".5");
-                    }
-                    else {
-//                        $(this.el).removeClass("selected");
-                        this.el.setAttribute("opacity", "1");
+                        className += "selected ";
                     }
                 }
                 
-                if (this.favorite !== image.get("isFavorite")) {
+                if (firstRender || classNameChanged || this.favorite !== image.get("isFavorite")) {
+                    classNameChanged = true;
                     Logger.log("update isfavorite");
                     this.favorite = image.get("isFavorite");
                     if (image.get("isFavorite")) {
-                        // todo: replace hardcoded opacity attribute
-                        // by css class
-//                        $(this.el).addClass("favorite");
-                        this.el.setAttribute("opacity", "1");
-                    }
-                    else {
-//                        $(this.el).removeClass("favorite");
-                        this.el.setAttribute("opacity", ".5");
+                        className += "favorite ";
                     }
                 }
+                //Logger.log("classname:" + className);
+                if (classNameChanged || firstRender)
+                    this.tileRect.setAttribute("class", className);
             }
         },
         getSize: function() {
@@ -116,10 +120,12 @@ define(["logger", "q"], function(Logger, Q) {
                 return;
             
             this.size = size;
-            this.image.setAttribute("width", size.width + "");
-            this.image.setAttribute("height", size.height + "");
-            this.clipRect.setAttribute("width", size.width + "");
-            this.clipRect.setAttribute("height", size.height + "");
+            this.image.setAttribute("width", size.width);
+            this.image.setAttribute("height", size.height);
+            this.clipRect.setAttribute("width", size.width);
+            this.clipRect.setAttribute("height", size.height);
+            this.tileRect.setAttribute("width", size.width);
+            this.tileRect.setAttribute("height", size.height);
             
             // resize the displayed image
 //            resizeImage(this.fullResImg, this.el, width, Number.POSITIVE_INFINITY);
