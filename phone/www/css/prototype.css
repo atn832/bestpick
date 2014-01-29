@@ -1,3 +1,7 @@
+.debug {
+    display: none;
+}
+
 html, body {
     height: 100%;
     border: 0px solid green;
@@ -59,7 +63,6 @@ input:last-of-type {
 }
 
 #status {
-    display: none;
     position:fixed;
     top: 0;
     left: 0;

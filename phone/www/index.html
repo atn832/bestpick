@@ -13,13 +13,19 @@
         <script src="js/app.js"></script>
     </head>
     <body>
-        <span id="status"></span>
+        <span id="status" class="debug"></span>
         <div id="container"></div>
         <nav id="toolbar">
             <input type="button" value="Select" id="btnSelect"><input type="button" value="Keep" id="btnKeep">
-<!--            <input type="button" value="Logs" id="btnLogs">-->
-            <input type="button" value="+" id="btnZoomIn">
-            <input type="button" value="-" id="btnZoomOut">
+            <span class="debug">
+            <input type="button" value="Logs" id="btnLogs">
+<!--
+                Workaround to work with css rule: last of type.
+                TODO: find a more elegant way to not have margin for the last visible element in the toolbar
+-->
+                <input type="button" value="+" id="btnZoomIn">
+                <input type="button" value="-" id="btnZoomOut">
+            </span>
         </nav>
     </body>
 </html>
