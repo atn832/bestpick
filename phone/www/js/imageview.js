@@ -59,12 +59,16 @@ define(["logger", "q"], function(Logger, Q) {
                 if (this.url !== image.get("url")) {
                     this.url = image.get("url");
                     console.log("setting url", this.url);
-                    this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', this.url);
+//                    this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', this.url);
                     
                     var img = document.createElement("img");
                     img.onload = function() {
                         instance.width = img.width;
                         instance.height = img.height;
+                        
+                        var size = instance.getSize();
+                        var thumbnailURI = resizeImage(img, size.width, size.height);
+                        instance.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
                     };
                     img.src = this.url;
                 }
@@ -160,6 +164,32 @@ define(["logger", "q"], function(Logger, Q) {
             return this.tileBorder.getBoundingClientRect();
         }
     });
+    
+    /**
+    * Resize an image and return the resized image's data URI
+    **/
+    function resizeImage(srcImageObject, width, height) {
+//        Logger.log("resizeImage" + width + "," + height);
+        var newWidth = width;
+        var newHeight = height;
+    
+        // Calculate a new scale
+        // The new scale will be the minimum of the two possible scales
+        var scale = Math.min((newWidth / srcImageObject.width), (newHeight / srcImageObject.height));
+//        Logger.log("scale" + scale);
+        
+        // New canvas
+        var dst_canvas = document.createElement('canvas');
+        dst_canvas.width = srcImageObject.width * scale;
+        dst_canvas.height = srcImageObject.height * scale;
+    
+        // Draw Image content in canvas
+        var dst_ctx = dst_canvas.getContext('2d');
+        dst_ctx.drawImage(srcImageObject, 0, 0, parseInt(srcImageObject.width * scale), parseInt(srcImageObject.height * scale));
+    
+        // Replace source of Image
+        return dst_canvas.toDataURL();
+    }
     
     return ImageView;
 });

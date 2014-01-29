@@ -124,7 +124,7 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
         this.oldDisplaySettings = displaySettings;
         
         Logger.log("clear gallery view");
-        Logger.log("grid size" + gridSize);
+//        Logger.log("grid size" + gridSize);
         el.innerHTML = "";
         var latestRowIndex = -1;
         var row;
@@ -186,7 +186,6 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
                 cx = _cx;
                 cy = _cy;
             }
-            Logger.log(cx + " " + cy);
             var translateMinusC = "translate(" + -cx + ", " + -cy + ")";
             var translateC = "translate(" + cx + ", " + cy + ")";
             image.setTransformation(translateC +
