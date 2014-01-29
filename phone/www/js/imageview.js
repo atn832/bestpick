@@ -105,8 +105,6 @@ define(["logger", "q"], function(Logger, Q) {
                     }
                 }
             }
-//            if (this.el.parentNode)
-//                this.el.parentNode.appendChild(this.image);
         },
         getSize: function() {
             return this.size;
@@ -140,6 +138,7 @@ define(["logger", "q"], function(Logger, Q) {
             this.transformation = t;
             this.image.setAttribute("transform", t);
 
+            // merges the whole transformation chain into just one
             var consolidatedTransform = this.image.transform.baseVal.consolidate();
             // returns null when transform is empty
             if (!consolidatedTransform)

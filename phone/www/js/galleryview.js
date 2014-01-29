@@ -36,7 +36,8 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
         translate: translate,
         prepend: prepend,
         resetTransformation: resetTransformation,
-        setTransformation: setTransformation
+        setTransformation: setTransformation,
+        getDisplayedImages: getDisplayedImages
     });
 
     function render() {
@@ -167,11 +168,7 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
     }
     
     function zoom(s) {
-        if (!this.oldDisplaySettings ||
-            !this.oldDisplaySettings.displayedImages)
-            return;
-        
-        this.oldDisplaySettings.displayedImages.forEach(function(image) {
+        this.getDisplayedImages().forEach(function(image) {
             var size = image.getSize();
             var cx = size.width / 2;
             var cy = size.height / 2;
@@ -190,21 +187,13 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
     * Prepends a SVG transformation to all the displayed images
     **/
     function prepend(transformation) {
-        if (!this.oldDisplaySettings ||
-            !this.oldDisplaySettings.displayedImages)
-            return;
-        
-        this.oldDisplaySettings.displayedImages.forEach(function(image) {
+        this.getDisplayedImages().forEach(function(image) {
             image.setTransformation(transformation + " " + image.getTransformation());
         });
     }
     
     function setTransformation(transformation) {
-        if (!this.oldDisplaySettings ||
-            !this.oldDisplaySettings.displayedImages)
-            return;
-        
-        this.oldDisplaySettings.displayedImages.forEach(function(image) {
+        this.getDisplayedImages().forEach(function(image) {
             image.setTransformation(transformation);
         });
     }
@@ -280,6 +269,14 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
         imageSize.width *= scale;
         imageSize.height *= scale;
         return imageSize;
+    }
+    
+    function getDisplayedImages() {
+        if (!this.oldDisplaySettings ||
+            !this.oldDisplaySettings.displayedImages)
+            return [];
+        
+        return this.oldDisplaySettings.displayedImages;
     }
 
     function isSame(displaySettings, oldDisplaySettings) {
