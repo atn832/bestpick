@@ -168,7 +168,17 @@ function initialize(Logger) {
             gv.translate(dx, dy);
             lastDragCenter = newCenter;
         });
-                
+        
+        $(gv.el).on('mousewheel', function(event) {
+            if (!gv.isShowSelected())
+                return;
+            
+            console.log(event.deltaX, event.deltaY, event.deltaFactor);
+            var factor = 1 + Math.sqrt(Math.abs(event.deltaY)) / 10;
+            if (event.deltaY > 0)
+                factor = 1 / factor;
+            gv.zoom(factor);
+        });
         // listener to selected images
         g.on("add:selectedImages remove:selectedImages reset:selectedImages", function() {
             updateSelectButtonState(g, gv);
