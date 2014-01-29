@@ -39,6 +39,10 @@ input:last-of-type {
 }
 
 /* Image View style */
+.background {
+    fill: white;
+}
+
 .tile {
     stroke: black;
     fill: none;

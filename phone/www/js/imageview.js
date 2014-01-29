@@ -15,9 +15,11 @@ define(["logger", "q"], function(Logger, Q) {
                     <clipPath id=clipID>
                         <rect .../>
                     </clipPath>
+                    <rect> <-- background
                     <g clip-path=url(clipID)>
                         <image transform="matrix(...)">
                     </g>
+                    <rect> <-- border
                 </g>
             */
             
@@ -29,21 +31,21 @@ define(["logger", "q"], function(Logger, Q) {
             this.clipPath.setAttribute("id", this.clipID);
             
             this.clipRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            this.clipRect.setAttribute("x" , "0");
-            this.clipRect.setAttribute("y" , "0");
             
-            this.tileRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            this.tileRect.setAttribute("x", "0");
-            this.tileRect.setAttribute("y", "0");
-            this.tileRect.setAttribute("clip-path", "url(#" + this.clipID + ")");
+            this.tileBackground = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            this.tileBackground.setAttribute("class", "background");
+            
+            this.tileBorder = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            this.tileBorder.setAttribute("clip-path", "url(#" + this.clipID + ")");
             
             this.image = document.createElementNS("http://www.w3.org/2000/svg", "image");
             this.g.setAttribute("clip-path", "url(#" + this.clipID + ")");
             this.g.appendChild(this.image);
             this.clipPath.appendChild(this.clipRect);
             this.el.appendChild(this.clipPath);
+            this.el.appendChild(this.tileBackground);
             this.el.appendChild(this.g);
-            this.el.appendChild(this.tileRect);
+            this.el.appendChild(this.tileBorder);
             this.transformation = "";
             
             this.render();
@@ -58,15 +60,6 @@ define(["logger", "q"], function(Logger, Q) {
                     this.url = image.get("url");
                     console.log("setting url", this.url);
                     this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', this.url);
-                    this.image.setAttribute("x", "0");
-                    this.image.setAttribute("y", "0");
-                    this.image.setAttribute("width", "100");
-                    this.image.setAttribute("height", "100");
-                    // not necessary until zoomed in
-                    this.clipRect.setAttribute("width", "100");
-                    this.clipRect.setAttribute("height", "100");
-                    this.tileRect.setAttribute("width", "100");
-                    this.tileRect.setAttribute("height", "100");
                     
                     var img = document.createElement("img");
                     img.onload = function() {
@@ -77,8 +70,11 @@ define(["logger", "q"], function(Logger, Q) {
                 }
                 
                 if (this.el.model !== image) {
-//                    Logger.log("update image view model");
+                    // a user click will intersect either the tile or the image
                     this.image.model = image;
+                    this.tileBackground.model = image;
+                    this.image.view = this;
+                    this.tileBackground.view = this;
                 }
                 
                 var className = "tile ";
@@ -92,7 +88,7 @@ define(["logger", "q"], function(Logger, Q) {
                 //Logger.log("classname:" + className);
                 if (className !== this.className) {
                     this.className = className;
-                    this.tileRect.setAttribute("class", className);
+                    this.tileBorder.setAttribute("class", className);
                 }
             }
         },
@@ -110,8 +106,10 @@ define(["logger", "q"], function(Logger, Q) {
             this.image.setAttribute("height", size.height);
             this.clipRect.setAttribute("width", size.width);
             this.clipRect.setAttribute("height", size.height);
-            this.tileRect.setAttribute("width", size.width);
-            this.tileRect.setAttribute("height", size.height);
+            this.tileBorder.setAttribute("width", size.width);
+            this.tileBorder.setAttribute("height", size.height);
+            this.tileBackground.setAttribute("width", size.width);
+            this.tileBackground.setAttribute("height", size.height);
             
             // resize the displayed image
 //            resizeImage(this.fullResImg, this.el, width, Number.POSITIVE_INFINITY);
@@ -130,6 +128,7 @@ define(["logger", "q"], function(Logger, Q) {
             this.transformation = t;
             this.image.setAttribute("transform", t);
 
+            return;
             // merges the whole transformation chain into just one
             var consolidatedTransform = this.image.transform.baseVal.consolidate();
             // returns null when transform is empty
@@ -151,6 +150,14 @@ define(["logger", "q"], function(Logger, Q) {
         **/
         setBounds: function(b) {
             this.bounds = b;
+        },
+        /**
+        * @returns the bounding rectangle of the tile
+        **/
+        getBoundingClientRect: function() {
+            // cannot return this.el as the calculation returns the bounds
+            // as if the image was not clipped
+            return this.tileBorder.getBoundingClientRect();
         }
     });
     

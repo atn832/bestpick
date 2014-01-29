@@ -167,11 +167,26 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
         this.el.appendChild(this.svg);
     }
     
-    function zoom(s) {
+    /**
+    * Scales all the displayed images
+    * @param s the scale
+    * @param cx the X coordinate of the center
+    * @param cy the Y coordinate of the center
+    **/
+    function zoom(s, _cx, _cy) {
         this.getDisplayedImages().forEach(function(image) {
             var size = image.getSize();
-            var cx = size.width / 2;
-            var cy = size.height / 2;
+            // use the center if center is undefined
+            var cx, cy;
+            if (_cx === undefined) {
+                cx = size.width / 2;
+                cy = size.height / 2;
+            }
+            else {
+                cx = _cx;
+                cy = _cy;
+            }
+            Logger.log(cx + " " + cy);
             var translateMinusC = "translate(" + -cx + ", " + -cy + ")";
             var translateC = "translate(" + cx + ", " + cy + ")";
             image.setTransformation(translateC +
