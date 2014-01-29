@@ -168,7 +168,26 @@ function initialize(Logger) {
             gv.translate(dx, dy);
             lastDragCenter = newCenter;
         });
-                
+        
+        $(gv.el).on('mousewheel', function(event) {
+            if (!gv.isShowSelected())
+                return;
+            
+            var model = event.target.model;
+            if (!(model instanceof Image))
+                return;
+            
+            var imageView = event.target.view;
+            // warning: getBoundingClientRect is implemented by our own view
+            // do not call it on imageView.el
+            var bounds = imageView.getBoundingClientRect();
+            var cx = event.pageX - bounds.left;
+            var cy = event.pageY - bounds.top;
+            var factor = 1 + Math.sqrt(Math.abs(event.deltaY)) / 10;
+            if (event.deltaY > 0)
+                factor = 1 / factor;
+            gv.zoom(factor, cx, cy);
+        });
         // listener to selected images
         g.on("add:selectedImages remove:selectedImages reset:selectedImages", function() {
             updateSelectButtonState(g, gv);

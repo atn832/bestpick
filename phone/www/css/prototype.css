@@ -1,3 +1,7 @@
+.debug {
+    display: none;
+}
+
 html, body {
     height: 100%;
     border: 0px solid green;
@@ -39,25 +43,26 @@ input:last-of-type {
 }
 
 /* Image View style */
+.background {
+    fill: white;
+}
+
 .tile {
     stroke: black;
-    fill: lightgray;
+    fill: none;
 }
 
 .gallery .selected {
-    fill: white;
     stroke: green;
     stroke-width: 5;
 }
 
 .gallery .favorite {
-    fill: white;
     stroke: red;
     stroke-width: 5;
 }
 
 #status {
-/*    display: none;*/
     position:fixed;
     top: 0;
     left: 0;
