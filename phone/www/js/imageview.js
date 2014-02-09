@@ -39,14 +39,19 @@ define(["logger", "q"], function(Logger, Q) {
             this.tileBorder.setAttribute("clip-path", "url(#" + this.clipID + ")");
             
             this.image = document.createElementNS("http://www.w3.org/2000/svg", "image");
+//            this.fullResolutionImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
             this.g.setAttribute("clip-path", "url(#" + this.clipID + ")");
             this.g.appendChild(this.image);
             this.clipPath.appendChild(this.clipRect);
             this.el.appendChild(this.clipPath);
             this.el.appendChild(this.tileBackground);
             this.el.appendChild(this.g);
+//            this.el.appendChild(this.fullResolutionImage);
             this.el.appendChild(this.tileBorder);
             this.transformation = "";
+            
+            // image contains some lower resolution image
+            // fullResolutionImage contains the full resolution piece of picture
             
             this.render();
         },
@@ -61,16 +66,17 @@ define(["logger", "q"], function(Logger, Q) {
                     console.log("setting url", this.url);
 //                    this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', this.url);
                     
-                    var img = document.createElement("img");
-                    img.onload = function() {
-                        instance.width = img.width;
-                        instance.height = img.height;
+                    this.fullImage = document.createElement("img");
+                    this.fullImage.onload = function() {
+                        instance.width = instance.fullImage.width;
+                        instance.height = instance.fullImage.height;
                         
                         var size = instance.getSize();
-                        var thumbnailURI = resizeImage(img, size.width, size.height);
+                        var thumbnailURI = resizeImage(instance.fullImage, size.width, size.height);
                         instance.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
+                        this.thumnailURI = thumbnailURI;
                     };
-                    img.src = this.url;
+                    this.fullImage.src = this.url;
                 }
                 
                 if (this.el.model !== image) {
@@ -117,6 +123,15 @@ define(["logger", "q"], function(Logger, Q) {
             
             // resize the displayed image
 //            resizeImage(this.fullResImg, this.el, width, Number.POSITIVE_INFINITY);
+            
+//             quick test
+//            if (size.width === 100) {
+//                if (this.thumbnailURI)
+//                    this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', this.thumbnailURI);
+//            }
+//            else {
+//                this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', this.url);
+//            }
         },
         // returns the current size, not the max one...
         getWidth: function() {
@@ -132,7 +147,6 @@ define(["logger", "q"], function(Logger, Q) {
             this.transformation = t;
             this.image.setAttribute("transform", t);
 
-            return;
             // merges the whole transformation chain into just one
             var consolidatedTransform = this.image.transform.baseVal.consolidate();
             // returns null when transform is empty
@@ -142,6 +156,41 @@ define(["logger", "q"], function(Logger, Q) {
             
             var strmatrix = "matrix(" + m.a + ", " + m.c + ", " + m.b + ", " + m.d + ", " + m.e + ", " + m.f + ")";
             this.image.setAttribute("transform", strmatrix);
+            
+            this.resizeRequired = true;
+            if (this.timer)
+                clearTimeout(this.timer);
+            this.timer = setTimeout(
+                function() {
+                    console.log("resizing");
+//                    if (!this.resizeRequired)
+//                        return;
+
+                    var consolidatedTransform = this.image.transform.baseVal.consolidate();
+                    // returns null when transform is empty
+                    var m;
+                    if (consolidatedTransform)
+                        m = consolidatedTransform.matrix;
+                    else 
+                        m = new SVGMatrix().matrix;
+
+                    // no skewing, no rotation
+                    var size = {
+                        width: Math.round(m.a * this.getSize().width),
+                        height: Math.round(m.d * this.getSize().height)
+                    };
+                    var imageBounds = this.image.getBoundingClientRect();
+                    console.log("resizing to", size.width, size.height);
+//                    if (Math.abs(imageBounds.width - size.width) < 1 &&
+//                        Math.abs(imageBounds.height - size.height) < 1) {
+//                        return;
+//                    }
+
+                    var thumbnailURI = resizeImage(this.fullImage, size.width, size.height);
+                    this.image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
+//                    this.image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', this.url);
+                    this.resizeRequired = false;
+                }.bind(this), 1000);
         },
         /**
         * @returns {Rectangle} bounds
