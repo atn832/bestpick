@@ -1,4 +1,4 @@
-define(["logger", "backbone"], function(Logger) {
+define(["logger", "transformation", "rectangle", "backbone"], function(Logger, Transformation, Rectangle) {
     var ImageView = Backbone.View.extend({
         tagName: "span",
         className: "galleryImage",
@@ -164,6 +164,10 @@ define(["logger", "backbone"], function(Logger) {
             this.resizeRequired = true;
             if (this.timer)
                 clearTimeout(this.timer);
+            
+            // clear full resolution image (using a small transparent image)
+            this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw== ");
+            
             this.timer = setTimeout(
                 function() {
                     // regenerate full resolution tile
@@ -186,25 +190,19 @@ define(["logger", "backbone"], function(Logger) {
                         height: Math.round(m.d * this.getSize().height)
                     };
                     var imageBounds = this.image.getBoundingClientRect();
-                    console.log("resizing to", size.width, size.height);
-                    console.log("pos", imageBounds.left, imageBounds.top);
+                    console.log("imagebounds", imageBounds);
                     
                     // localied thumbnail (broken)
-//                    var fullSize = {
-//                        width: this.fullImage.width,
-//                        height: this.fullImage.height
-//                    };
-//                    
-//                    var modelToDevice = getFitMatrix(fullSize, size);
-//                    modelToDevice.multiply(m);
-//
-//                    var thumbnailURI = getSubImage(this.fullImage, size, modelToDevice);
-//                    this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
+                    var fullSize = {
+                        width: this.fullImage.width,
+                        height: this.fullImage.height
+                    };
                     
-                    // thumbnail of the whole picture
-                    var thumbnailURI = resizeImage(this.fullImage, size.width, size.height);
-                    this.image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
-//                    this.image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', this.url);
+                    var fit = Transformation.getFitMatrix(fullSize, this.size);
+                    var modelToDevice = m.multiply(fit);
+
+                    var thumbnailURI = getSubImage(this.fullImage, this.size, modelToDevice);
+                    this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
                     this.resizeRequired = false;
                 }.bind(this), 1000);
         },
@@ -271,62 +269,29 @@ define(["logger", "backbone"], function(Logger) {
             height: srcImageObject.height
         };
         
-        var devImageRect = transform(fullSize, matrix);
-        var destRect = {
-            x: Math.max(0, devImageRect.x),
-            y: Math.max(0, devImageRect.y),
-            width: Math.max(0, Math.min(devImageRect.x + devImageRect.width, thumbnailSize.width)),
-            height: Math.max(0, Math.min(devImageRect.y + devImageRect.height, thumbnailSize.height)),
-        };
+        var devImageRect = Transformation.transform(fullSize, matrix);
+        console.log("devImageRect", devImageRect);
         
-        var sourceRect = transform(destRect, matrix.inverse());
+        var thumbnailRect = {
+            x: 0,
+            y: 0,
+            width: thumbnailSize.width,
+            height: thumbnailSize.height
+        };
+        var destRect = Rectangle.getIntersection(devImageRect, thumbnailRect);
+        console.log("destRect", destRect);
+        
+        var sourceRect = Transformation.transform(destRect, matrix.inverse());
         console.log("subimage source", sourceRect);
         console.log("subimage dest", destRect);
         // Draw Image content in canvas
         var dst_ctx = dst_canvas.getContext('2d');
         dst_ctx.drawImage(srcImageObject,
-                        destRect.x, destRect.y, destRect.width, destRect.height,            // destination
-                        sourceRect.x, sourceRect.y, sourceRect.width, sourceRect.height);   // source
+                        sourceRect.x, sourceRect.y, sourceRect.width, sourceRect.height,    // source
+                        destRect.x, destRect.y, destRect.width, destRect.height);           // destination
     
         // Replace source of Image
         return dst_canvas.toDataURL();
-    }
-    
-    function getFitMatrix(fullSize, thumbnailSize) {
-        var fitWidth = thumbnailSize.width / fullSize.width;
-        var fitHeight = thumbnailSize.height / fullSize.height;
-        var scale = Math.min(fitWidth, fitHeight);
-        
-        var renderedThumbnailSize = {
-            width: scale * fullSize.width,
-            height: scale * fullSize.height
-        };
-        
-        //center
-        var dx = (fullSize.width - renderedThumbnailSize.width) / 2;
-        var dy = (fullSize.height - renderedThumbnailSize.height) / 2;
-        
-        var svg = document.querySelector("svg");
-        var m = svg.createSVGMatrix();
-        m.a = scale;
-        m.d = scale;
-        m.e = dx;
-        m.f = dy;
-        return m;
-    }
-    
-    function transform(rect, m) {
-        var x = rect.x === undefined? 0: rect.x;
-        var y = rect.y === undefined? 0: rect.y;
-        var width = rect.width === undefined? 0: rect.width;
-        var height = rect.height === undefined? 0: rect.height;
-        
-        return {
-            x: m.a * x + m.e,
-            y: m.d * y + m.f,
-            width: m.a * width,
-            height: m.d * height
-        }
     }
     
     return ImageView;
