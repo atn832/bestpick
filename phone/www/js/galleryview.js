@@ -1,4 +1,4 @@
-define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logger, Gallery, ImageView, GalleryViewSettings) {
+define(["logger", "gallery", "imageview", "galleryviewsettings", "backbone"], function(Logger, Gallery, ImageView, GalleryViewSettings) {
     var cssBorderWidth = 4;
     var StandardTileSize = 100;
     
