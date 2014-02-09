@@ -1,4 +1,4 @@
-define(["logger", "q"], function(Logger, Q) {
+define(["logger"], function(Logger) {
     var ImageView = Backbone.View.extend({
         tagName: "span",
         className: "galleryImage",

@@ -15,6 +15,12 @@
     "tests"
   ],
   "dependencies": {
+    "backbone": "~1.1.0",
+    "hammerjs": "~1.0.6",
+    "requirejs": "~2.1.10",
+    "jquery-mousewheel": "~3.1.9",
+    "jquery": "~2.1.0",
+    "underscore": "~1.5.2",
     "qunit": "~1.14.0"
   }
 }
