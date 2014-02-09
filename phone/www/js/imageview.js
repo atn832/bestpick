@@ -39,14 +39,14 @@ define(["logger", "q"], function(Logger, Q) {
             this.tileBorder.setAttribute("clip-path", "url(#" + this.clipID + ")");
             
             this.image = document.createElementNS("http://www.w3.org/2000/svg", "image");
-//            this.fullResolutionImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
+            this.fullResolutionImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
             this.g.setAttribute("clip-path", "url(#" + this.clipID + ")");
             this.g.appendChild(this.image);
             this.clipPath.appendChild(this.clipRect);
             this.el.appendChild(this.clipPath);
             this.el.appendChild(this.tileBackground);
             this.el.appendChild(this.g);
-//            this.el.appendChild(this.fullResolutionImage);
+            this.el.appendChild(this.fullResolutionImage);
             this.el.appendChild(this.tileBorder);
             this.transformation = "";
             
@@ -82,8 +82,10 @@ define(["logger", "q"], function(Logger, Q) {
                 if (this.el.model !== image) {
                     // a user click will intersect either the tile or the image
                     this.image.model = image;
+                    this.fullResolutionImage.model = image;
                     this.tileBackground.model = image;
                     this.image.view = this;
+                    this.fullResolutionImage.view = this;
                     this.tileBackground.view = this;
                 }
                 
@@ -114,6 +116,8 @@ define(["logger", "q"], function(Logger, Q) {
             this.size = size;
             this.image.setAttribute("width", size.width);
             this.image.setAttribute("height", size.height);
+            this.fullResolutionImage.setAttribute("width", size.width);
+            this.fullResolutionImage.setAttribute("height", size.height);
             this.clipRect.setAttribute("width", size.width);
             this.clipRect.setAttribute("height", size.height);
             this.tileBorder.setAttribute("width", size.width);
@@ -162,6 +166,8 @@ define(["logger", "q"], function(Logger, Q) {
                 clearTimeout(this.timer);
             this.timer = setTimeout(
                 function() {
+                    // regenerate full resolution tile
+                    
                     console.log("resizing");
 //                    if (!this.resizeRequired)
 //                        return;
@@ -181,11 +187,21 @@ define(["logger", "q"], function(Logger, Q) {
                     };
                     var imageBounds = this.image.getBoundingClientRect();
                     console.log("resizing to", size.width, size.height);
-//                    if (Math.abs(imageBounds.width - size.width) < 1 &&
-//                        Math.abs(imageBounds.height - size.height) < 1) {
-//                        return;
-//                    }
-
+                    console.log("pos", imageBounds.left, imageBounds.top);
+                    
+                    // localied thumbnail (broken)
+//                    var fullSize = {
+//                        width: this.fullImage.width,
+//                        height: this.fullImage.height
+//                    };
+//                    
+//                    var modelToDevice = getFitMatrix(fullSize, size);
+//                    modelToDevice.multiply(m);
+//
+//                    var thumbnailURI = getSubImage(this.fullImage, size, modelToDevice);
+//                    this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
+                    
+                    // thumbnail of the whole picture
                     var thumbnailURI = resizeImage(this.fullImage, size.width, size.height);
                     this.image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
 //                    this.image.setAttributeNS('http://www.w3.org/1999/xlink', 'href', this.url);
@@ -224,7 +240,7 @@ define(["logger", "q"], function(Logger, Q) {
     
         // Calculate a new scale
         // The new scale will be the minimum of the two possible scales
-        var scale = Math.min((newWidth / srcImageObject.width), (newHeight / srcImageObject.height));
+        var scale = Math.min(newWidth / srcImageObject.width, newHeight / srcImageObject.height);
 //        Logger.log("scale" + scale);
         
         // New canvas
@@ -238,6 +254,79 @@ define(["logger", "q"], function(Logger, Q) {
     
         // Replace source of Image
         return dst_canvas.toDataURL();
+    }
+    
+    /**
+    * @param matrix matrix of the full transformation from src image size to device (ie it also contains fit transformation in it)
+    **/
+    function getSubImage(srcImageObject, thumbnailSize, matrix) {
+        // New canvas
+        var dst_canvas = document.createElement('canvas');
+        dst_canvas.width = thumbnailSize.width;
+        dst_canvas.height = thumbnailSize.height;
+        
+        // full size
+        var fullSize = {
+            width: srcImageObject.width,
+            height: srcImageObject.height
+        };
+        
+        var devImageRect = transform(fullSize, matrix);
+        var destRect = {
+            x: Math.max(0, devImageRect.x),
+            y: Math.max(0, devImageRect.y),
+            width: Math.max(0, Math.min(devImageRect.x + devImageRect.width, thumbnailSize.width)),
+            height: Math.max(0, Math.min(devImageRect.y + devImageRect.height, thumbnailSize.height)),
+        };
+        
+        var sourceRect = transform(destRect, matrix.inverse());
+        console.log("subimage source", sourceRect);
+        console.log("subimage dest", destRect);
+        // Draw Image content in canvas
+        var dst_ctx = dst_canvas.getContext('2d');
+        dst_ctx.drawImage(srcImageObject,
+                        destRect.x, destRect.y, destRect.width, destRect.height,            // destination
+                        sourceRect.x, sourceRect.y, sourceRect.width, sourceRect.height);   // source
+    
+        // Replace source of Image
+        return dst_canvas.toDataURL();
+    }
+    
+    function getFitMatrix(fullSize, thumbnailSize) {
+        var fitWidth = thumbnailSize.width / fullSize.width;
+        var fitHeight = thumbnailSize.height / fullSize.height;
+        var scale = Math.min(fitWidth, fitHeight);
+        
+        var renderedThumbnailSize = {
+            width: scale * fullSize.width,
+            height: scale * fullSize.height
+        };
+        
+        //center
+        var dx = (fullSize.width - renderedThumbnailSize.width) / 2;
+        var dy = (fullSize.height - renderedThumbnailSize.height) / 2;
+        
+        var svg = document.querySelector("svg");
+        var m = svg.createSVGMatrix();
+        m.a = scale;
+        m.d = scale;
+        m.e = dx;
+        m.f = dy;
+        return m;
+    }
+    
+    function transform(rect, m) {
+        var x = rect.x === undefined? 0: rect.x;
+        var y = rect.y === undefined? 0: rect.y;
+        var width = rect.width === undefined? 0: rect.width;
+        var height = rect.height === undefined? 0: rect.height;
+        
+        return {
+            x: m.a * x + m.e,
+            y: m.d * y + m.f,
+            width: m.a * width,
+            height: m.d * height
+        }
     }
     
     return ImageView;
