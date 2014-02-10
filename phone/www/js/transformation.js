@@ -1,14 +1,4 @@
-define(function() {
-    var svg;
-    function getSVG() {
-        if (!svg) {
-            svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
-            svg.setAttribute("version", "1.1");
-        }
-        return svg;
-    }
-    
+define(["svg"], function(SVG) {    
     return {
         transform: function (rect, m) {
             var x = rect.x === undefined? 0: rect.x;
@@ -37,7 +27,7 @@ define(function() {
             var dx = (thumbnailSize.width - renderedThumbnailSize.width) / 2;
             var dy = (thumbnailSize.height - renderedThumbnailSize.height) / 2;
 
-            var m = getSVG().createSVGMatrix();
+            var m = SVG.createSVGMatrix();
             m.a = scale;
             m.d = scale;
             m.e = dx;

@@ -1,4 +1,7 @@
-define(["logger", "transformation", "rectangle", "backbone"], function(Logger, Transformation, Rectangle) {
+define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Logger, Transformation, Rectangle, SVG) {
+    var fullResolutionGenerationTimeout = 500;
+    var thumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
+    
     var ImageView = Backbone.View.extend({
         tagName: "span",
         className: "galleryImage",
@@ -19,6 +22,7 @@ define(["logger", "transformation", "rectangle", "backbone"], function(Logger, T
                     <g clip-path=url(clipID)>
                         <image transform="matrix(...)">
                     </g>
+                    <image> <-- full resolution piece of image
                     <rect> <-- border
                 </g>
             */
@@ -72,7 +76,7 @@ define(["logger", "transformation", "rectangle", "backbone"], function(Logger, T
                         instance.height = instance.fullImage.height;
                         
                         var size = instance.getSize();
-                        var thumbnailURI = resizeImage(instance.fullImage, size.width, size.height);
+                        var thumbnailURI = resizeImage(instance.fullImage, thumbnailPixelSize, thumbnailPixelSize);
                         instance.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
                         this.thumnailURI = thumbnailURI;
                     };
@@ -125,17 +129,7 @@ define(["logger", "transformation", "rectangle", "backbone"], function(Logger, T
             this.tileBackground.setAttribute("width", size.width);
             this.tileBackground.setAttribute("height", size.height);
             
-            // resize the displayed image
-//            resizeImage(this.fullResImg, this.el, width, Number.POSITIVE_INFINITY);
-            
-//             quick test
-//            if (size.width === 100) {
-//                if (this.thumbnailURI)
-//                    this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', this.thumbnailURI);
-//            }
-//            else {
-//                this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', this.url);
-//            }
+            this.requestThumbnailUpdate();
         },
         // returns the current size, not the max one...
         getWidth: function() {
@@ -161,50 +155,7 @@ define(["logger", "transformation", "rectangle", "backbone"], function(Logger, T
             var strmatrix = "matrix(" + m.a + ", " + m.c + ", " + m.b + ", " + m.d + ", " + m.e + ", " + m.f + ")";
             this.image.setAttribute("transform", strmatrix);
             
-            this.resizeRequired = true;
-            if (this.timer)
-                clearTimeout(this.timer);
-            
-            // clear full resolution image (using a small transparent image)
-            this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw== ");
-            
-            this.timer = setTimeout(
-                function() {
-                    // regenerate full resolution tile
-                    
-                    console.log("resizing");
-//                    if (!this.resizeRequired)
-//                        return;
-
-                    var consolidatedTransform = this.image.transform.baseVal.consolidate();
-                    // returns null when transform is empty
-                    var m;
-                    if (consolidatedTransform)
-                        m = consolidatedTransform.matrix;
-                    else 
-                        m = new SVGMatrix().matrix;
-
-                    // no skewing, no rotation
-                    var size = {
-                        width: Math.round(m.a * this.getSize().width),
-                        height: Math.round(m.d * this.getSize().height)
-                    };
-                    var imageBounds = this.image.getBoundingClientRect();
-                    console.log("imagebounds", imageBounds);
-                    
-                    // localied thumbnail (broken)
-                    var fullSize = {
-                        width: this.fullImage.width,
-                        height: this.fullImage.height
-                    };
-                    
-                    var fit = Transformation.getFitMatrix(fullSize, this.size);
-                    var modelToDevice = m.multiply(fit);
-
-                    var thumbnailURI = getSubImage(this.fullImage, this.size, modelToDevice);
-                    this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
-                    this.resizeRequired = false;
-                }.bind(this), 1000);
+            this.requestThumbnailUpdate();
         },
         /**
         * @returns {Rectangle} bounds
@@ -225,6 +176,37 @@ define(["logger", "transformation", "rectangle", "backbone"], function(Logger, T
             // cannot return this.el as the calculation returns the bounds
             // as if the image was not clipped
             return this.tileBorder.getBoundingClientRect();
+        },
+        requestThumbnailUpdate: function() {
+            if (this.timer)
+                clearTimeout(this.timer);
+
+            // clear full resolution image (using a small transparent image)
+            this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw== ");
+
+            this.timer = setTimeout(
+                function() {
+                    // regenerate full resolution tile
+                    var consolidatedTransform = this.image.transform.baseVal.consolidate();
+                    // returns null when transform is empty
+                    var m;
+                    if (consolidatedTransform)
+                        m = consolidatedTransform.matrix;
+                    else 
+                        m = SVG.createSVGMatrix();
+
+                    // no skewing, no rotation
+                    var fullSize = {
+                        width: this.fullImage.width,
+                        height: this.fullImage.height
+                    };
+
+                    var fit = Transformation.getFitMatrix(fullSize, this.size);
+                    var modelToDevice = m.multiply(fit);
+
+                    var thumbnailURI = getSubImage(this.fullImage, this.size, modelToDevice);
+                    this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
+                }.bind(this), fullResolutionGenerationTimeout);
         }
     });
     
@@ -239,7 +221,6 @@ define(["logger", "transformation", "rectangle", "backbone"], function(Logger, T
         // Calculate a new scale
         // The new scale will be the minimum of the two possible scales
         var scale = Math.min(newWidth / srcImageObject.width, newHeight / srcImageObject.height);
-//        Logger.log("scale" + scale);
         
         // New canvas
         var dst_canvas = document.createElement('canvas');
@@ -270,7 +251,6 @@ define(["logger", "transformation", "rectangle", "backbone"], function(Logger, T
         };
         
         var devImageRect = Transformation.transform(fullSize, matrix);
-        console.log("devImageRect", devImageRect);
         
         var thumbnailRect = {
             x: 0,
@@ -279,11 +259,8 @@ define(["logger", "transformation", "rectangle", "backbone"], function(Logger, T
             height: thumbnailSize.height
         };
         var destRect = Rectangle.getIntersection(devImageRect, thumbnailRect);
-        console.log("destRect", destRect);
         
         var sourceRect = Transformation.transform(destRect, matrix.inverse());
-        console.log("subimage source", sourceRect);
-        console.log("subimage dest", destRect);
         // Draw Image content in canvas
         var dst_ctx = dst_canvas.getContext('2d');
         dst_ctx.drawImage(srcImageObject,
