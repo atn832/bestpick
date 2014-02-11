@@ -1,5 +1,5 @@
-define(["logger", "image"], function(Logger, Image) {
-    var ProtoGallery = Backbone.Model.extend({
+define(["logger", "image", "backbone"], function(Logger, Image) {
+    var Gallery = Backbone.Model.extend({
         images: null,
         selectedImages: null,
         favoriteImages: null,
@@ -70,5 +70,5 @@ define(["logger", "image"], function(Logger, Image) {
         this.get("favoriteImages").set(selectedImages);
     }
     
-    return ProtoGallery;
+    return Gallery;
 });

@@ -1,4 +1,4 @@
-define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logger, Gallery, ImageView, GalleryViewSettings) {
+define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbone"], function(Logger, Gallery, ImageView, GalleryViewSettings, SVG) {
     var cssBorderWidth = 4;
     var StandardTileSize = 100;
     
@@ -124,7 +124,7 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
         this.oldDisplaySettings = displaySettings;
         
         Logger.log("clear gallery view");
-        Logger.log("grid size" + gridSize);
+//        Logger.log("grid size" + gridSize);
         el.innerHTML = "";
         var latestRowIndex = -1;
         var row;
@@ -140,7 +140,7 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
             // reset scale and translation in displayed tiles
             this.resetTransformation();
         }
-        this.svg.innerHTML = "";
+        SVG.clear(this.svg);
         viewsToDisplay.forEach(function(imageView, index) {
             var rowIndex = Math.floor(index / gridSize.width);
             var colIndex = index % gridSize.width;
@@ -186,7 +186,6 @@ define(["logger", "gallery", "imageview", "galleryviewsettings"], function(Logge
                 cx = _cx;
                 cy = _cy;
             }
-            Logger.log(cx + " " + cy);
             var translateMinusC = "translate(" + -cx + ", " + -cy + ")";
             var translateC = "translate(" + cx + ", " + cy + ")";
             image.setTransformation(translateC +

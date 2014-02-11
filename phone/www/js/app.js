@@ -27,11 +27,11 @@ var links =
     "img/IMG_20140113_133150398.jpg",
     "img/IMG_20140113_133157183.jpg",
     "img/IMG_20140113_133135059_HDR.jpg",
-    "img/IMG_20140113_133138099.jpg",
-    "img/IMG_20140111_123826003.jpg",
-    "img/IMG_20140111_123823790.jpg",
-    "img/IMG_20140108_174405213.jpg",
-    "img/IMG_20140108_174406969.jpg",
+//    "img/IMG_20140113_133138099.jpg",
+//    "img/IMG_20140111_123826003.jpg",
+//    "img/IMG_20140111_123823790.jpg",
+//    "img/IMG_20140108_174405213.jpg",
+//    "img/IMG_20140108_174406969.jpg",
     ];
 
 document.addEventListener("DOMContentLoaded", function(event) {
@@ -51,17 +51,6 @@ function initialize(Logger) {
             resetFlag(gallery.get("selectedImages"), "isSelected");
             resetFlag(gallery.get("favoriteImages"), "isFavorite");
         }
-        
-//        // should only add once.
-//        if (showSelected) {
-//            // Listen to pinch, scale the image when in Show Selected mode
-//            Logger.log("pinch listening");
-//            Hammer(galleryView.el, {prevent_default:true}).on("pinch", onPinch);
-//        }
-//        else {
-//            Logger.log("stop pinch listening");
-//            Hammer(galleryView.el, {prevent_default:true}).off("pinch", onPinch);
-//        }
     });
     
     keepBtn = document.getElementById(keepBtnID);
@@ -134,7 +123,7 @@ function initialize(Logger) {
         
         // put listeners on to images:
         // if touch on it, toggle
-        Hammer(gv.el).on("tap", function(event) {
+        Hammer(gv.el, {prevent_default: true}).on("tap", function(event) {
             Logger.log("tap", event);
             var el = event.target;
             if (el.model) {
@@ -152,13 +141,42 @@ function initialize(Logger) {
             }
         });
         
+        
+        var lastPinchScale;
+        
+        Hammer(gv.el, {prevent_default:true}).on("transformstart", function(event) {
+            lastPinchScale = event.gesture.scale;
+        });
+        
+        Hammer(gv.el, {prevent_default:true}).on("pinch", function(event) {
+            var newScale = event.gesture.scale;
+            Logger.log("pinch " + newScale);
+            
+            if (!gv.isShowSelected())
+                return;
+            
+            var relScale = newScale / lastPinchScale;
+            lastPinchScale = newScale;
+            var gestureCenter = event.gesture.center;
+            var center;
+            try {
+                center = getPosition(gestureCenter.pageX, gestureCenter.pageY, event.target);
+            }
+            catch (e) {
+                Logger.log(e);
+                center = {x: undefined, y: undefined};
+            }
+//            Logger.log("pinch " + relScale);
+            gv.zoom(relScale, center.x, center.y);
+        });
+
         var lastDragCenter;
         
-        Hammer(gv.el).on("dragstart", function(event) {
+        Hammer(gv.el, {prevent_default:true}).on("dragstart", function(event) {
             lastDragCenter = event.gesture.center;
         });
         
-        Hammer(gv.el).on("drag", function(event) {
+        Hammer(gv.el, {prevent_default:true}).on("drag", function(event) {
             if (!gv.isShowSelected())
                 return;
             
@@ -166,6 +184,7 @@ function initialize(Logger) {
             var dx = newCenter.pageX - lastDragCenter.pageX;
             var dy = newCenter.pageY - lastDragCenter.pageY;
             gv.translate(dx, dy);
+            Logger.log("drag " + dx + " " + dy);
             lastDragCenter = newCenter;
         });
         
@@ -173,21 +192,32 @@ function initialize(Logger) {
             if (!gv.isShowSelected())
                 return;
             
-            var model = event.target.model;
-            if (!(model instanceof Image))
-                return;
-            
-            var imageView = event.target.view;
-            // warning: getBoundingClientRect is implemented by our own view
-            // do not call it on imageView.el
-            var bounds = imageView.getBoundingClientRect();
-            var cx = event.pageX - bounds.left;
-            var cy = event.pageY - bounds.top;
+            var gestureCenter = event.gesture.center;
+            var center = getPosition(gestureCenter.pageX, gestureCenter.pageY, event.target);
             var factor = 1 + Math.sqrt(Math.abs(event.deltaY)) / 10;
             if (event.deltaY > 0)
                 factor = 1 / factor;
-            gv.zoom(factor, cx, cy);
+            gv.zoom(factor, center.x, center.y);
         });
+        
+        /**
+        * Returns the position relative to an image view's top left corner.
+        * target has to be part of the ImageView
+        **/
+        function getPosition(pageX, pageY, target) {
+            var model = target.model;
+            if (!(model instanceof Image))
+                throw "target is not part of an ImageView";
+            
+            var imageView = target.view;
+            // warning: getBoundingClientRect is implemented by our own view
+            // do not call it on imageView.el
+            var bounds = imageView.getBoundingClientRect();
+            var cx = pageX - bounds.left;
+            var cy = pageY - bounds.top;
+            return {x: cx, y: cy};
+        }
+        
         // listener to selected images
         g.on("add:selectedImages remove:selectedImages reset:selectedImages", function() {
             updateSelectButtonState(g, gv);
@@ -230,10 +260,6 @@ function updateKeepButtonState(gallery) {
     var keepBtnEnabled = favoriteImages.length > 0;
     var keepBtnDisabled = !keepBtnEnabled;
     keepBtn.disabled = keepBtnDisabled;
-}
-
-function onPinch(event) {
-    Logger.log("pinch " + event.gesture.scale);
 }
                                                  
 function resetFlag(collection, flagname) {
