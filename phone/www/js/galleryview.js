@@ -1,4 +1,4 @@
-define(["logger", "gallery", "imageview", "galleryviewsettings", "backbone"], function(Logger, Gallery, ImageView, GalleryViewSettings) {
+define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbone"], function(Logger, Gallery, ImageView, GalleryViewSettings, SVG) {
     var cssBorderWidth = 4;
     var StandardTileSize = 100;
     
@@ -140,7 +140,7 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "backbone"], fu
             // reset scale and translation in displayed tiles
             this.resetTransformation();
         }
-        this.svg.innerHTML = "";
+        SVG.clear(this.svg);
         viewsToDisplay.forEach(function(imageView, index) {
             var rowIndex = Math.floor(index / gridSize.width);
             var colIndex = index % gridSize.width;

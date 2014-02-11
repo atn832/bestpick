@@ -12,5 +12,14 @@ define(function() {
         return svg;
     }
 
-    return getSVG();
+    return {
+        SVGSVGElement: getSVG(),
+        /**
+        * Clears an SVG Element
+        **/
+        clear: function(svg) {
+            while (svg.lastChild)
+                svg.removeChild(svg.lastChild);
+        }
+    };
 });

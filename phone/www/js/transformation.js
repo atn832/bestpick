@@ -27,7 +27,7 @@ define(["svg"], function(SVG) {
             var dx = (thumbnailSize.width - renderedThumbnailSize.width) / 2;
             var dy = (thumbnailSize.height - renderedThumbnailSize.height) / 2;
 
-            var m = SVG.createSVGMatrix();
+            var m = SVG.SVGSVGElement.createSVGMatrix();
             m.a = scale;
             m.d = scale;
             m.e = dx;

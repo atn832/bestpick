@@ -193,7 +193,7 @@ define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Lo
                     if (consolidatedTransform)
                         m = consolidatedTransform.matrix;
                     else 
-                        m = SVG.createSVGMatrix();
+                        m = SVG.SVGSVGElement.createSVGMatrix();
 
                     // no skewing, no rotation
                     var fullSize = {
