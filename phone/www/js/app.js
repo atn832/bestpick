@@ -27,11 +27,11 @@ var links =
     "img/IMG_20140113_133150398.jpg",
     "img/IMG_20140113_133157183.jpg",
     "img/IMG_20140113_133135059_HDR.jpg",
-//    "img/IMG_20140113_133138099.jpg",
-//    "img/IMG_20140111_123826003.jpg",
-//    "img/IMG_20140111_123823790.jpg",
-//    "img/IMG_20140108_174405213.jpg",
-//    "img/IMG_20140108_174406969.jpg",
+    "img/IMG_20140113_133138099.jpg",
+    "img/IMG_20140111_123826003.jpg",
+    "img/IMG_20140111_123823790.jpg",
+    "img/IMG_20140108_174405213.jpg",
+    "img/IMG_20140108_174406969.jpg",
     ];
 
 document.addEventListener("DOMContentLoaded", function(event) {

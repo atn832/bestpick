@@ -16,52 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-
-function getFileSystem(callback) {
-    window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fileSystem) {
-        // success get file system
-        var sdcard = fileSystem.root;
-        sdcard.getDirectory('dcim/Camera', {create: false}, function(dcim) {
-            listDir(dcim, callback);
-        }, function(error) {
-            alert(error.code);
-        })
-    }, function(evt){ // error get file system
-        console.log(evt.target.error.code);
-    });
-}
-            
-function listDir(directoryEntry, callback){
-    var directoryReader = directoryEntry.createReader();
-         
-    directoryReader.readEntries(function(entries) { // success get files and folders
-        callback(entries.map(function(entry) { return entry.fullPath; }));;
-//        for (var i = 0; i < entries.length; ++i){
-//            console.log(entries[i].name);
-//            var img = document.getElementById("img");
-//            img.src = entries[i].fullPath;
-//        }
-    }, function(error) { // error get files and folders
-        alert(error.code);
-    });
-}
-
-
 var app = {
     // Application Constructor
     initialize: function() {
-//        this.bindEvents();
-        var g = document.getElementById("gallery");
-        new Gallery(g).setContent([
-            "img/IMG_20140108_174405213.jpg",
-            "img/IMG_20140108_174406969.jpg",
-            "img/IMG_20140108_220335579.jpg",
-            "img/IMG_20140108_220336102.jpg",
-            "img/IMG_20140108_220336660.jpg",
-            "img/IMG_20140108_220337241.jpg",
-            "img/IMG_20140108_220337821.jpg"
-        ]);
+        this.bindEvents();
     },
     // Bind Event Listeners
     //
@@ -76,12 +34,6 @@ var app = {
     // function, we must explicity call 'app.receivedEvent(...);'
     onDeviceReady: function() {
         app.receivedEvent('deviceready');
-        
-        getFileSystem(function(urls) {
-            var galleryDiv = document.getElementById("gallery");
-            var gallery = new Gallery(galleryDiv);
-            gallery.setContent(urls);
-        });
     },
     // Update DOM on a Received Event
     receivedEvent: function(id) {
@@ -93,6 +45,5 @@ var app = {
         receivedElement.setAttribute('style', 'display:block;');
 
         console.log('Received Event: ' + id);
-    },
-    
+    }
 };
