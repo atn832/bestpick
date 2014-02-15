@@ -79,10 +79,7 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
         if (showSelected) {
             // respect ratio, fit to screen
             var imageSizes = viewsToDisplay.map(function(imageView) {
-                return {
-                    width: imageView.getWidth(),
-                    height: imageView.getHeight()
-                }
+                return imageView.getFullSize();
             });
             Logger.log(imageSizes);
             // stretch

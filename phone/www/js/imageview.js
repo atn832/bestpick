@@ -138,13 +138,6 @@ define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Lo
             
             this.requestThumbnailUpdate();
         },
-        // returns the full size
-        getWidth: function() {
-            return this.width;
-        },
-        getHeight: function() {
-            return this.height;
-        },
         getTransformation: function() {
             return this.transformation;
         },
@@ -163,18 +156,6 @@ define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Lo
             this.image.setAttribute("transform", strmatrix);
             
             this.requestThumbnailUpdate();
-        },
-        /**
-        * @returns {Rectangle} bounds
-        **/
-        getBounds: function() {
-            return this.bounds;
-        },
-        /**
-        * @param {Rectangle} b bounds
-        **/
-        setBounds: function(b) {
-            this.bounds = b;
         },
         /**
         * @returns the bounding rectangle of the tile
