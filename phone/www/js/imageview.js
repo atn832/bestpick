@@ -113,6 +113,12 @@ define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Lo
             }
         },
         /**
+        * Returns the size of the full resolution image
+        **/
+        getFullSize: function() {
+            return this.fullSize;
+        },
+        /**
         * Returns the tile size
         **/
         getSize: function() {
@@ -208,9 +214,6 @@ define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Lo
                 }.bind(this));
             }
             return this.fullImagePromise;
-        },
-        getFullSize: function() {
-            return this.fullSize;
         }
     });
     
