@@ -1,3 +1,6 @@
+/**
+* Implementation of an ImageView. It displays an Image whose url is assumed to be static (for simplicity)
+**/
 define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Logger, Transformation, Rectangle, SVG) {
     var fullResolutionGenerationTimeout = 500;
     var thumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
@@ -57,6 +60,35 @@ define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Lo
             // image contains some lower resolution image
             // fullResolutionImage contains the full resolution piece of picture
             
+            /*
+            * Set up attributes for interaction.
+            * a user click will intersect either the tile or the image
+            */
+            var image = this.model;
+            this.image.model = image;
+            this.fullResolutionImage.model = image;
+            this.tileBackground.model = image;
+            this.image.view = this;
+            this.fullResolutionImage.view = this;
+            this.tileBackground.view = this;
+            
+            this.width = 0;
+            this.height = 0;
+            this.getFullImagePromise().then(function(fullImage) {
+                this.fullSize = {
+                    width: fullImage.width,
+                    height: fullImage.height
+                };
+                this.width = fullImage.width;
+                this.height = fullImage.height;
+            }.bind(this));
+            
+            // Set up fixed resolution image
+            this.getFullImagePromise().then(function(fullImage) {
+                var thumbnailURI = resizeImage(fullImage, thumbnailPixelSize, thumbnailPixelSize);
+                this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
+            }.bind(this));
+            
             this.render();
         },
         render: function() {
@@ -64,34 +96,6 @@ define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Lo
             var image = this.model;
             if (image) {
                 var instance = this;
-                
-                if (this.url !== image.get("url")) {
-                    this.url = image.get("url");
-                    console.log("setting url", this.url);
-//                    this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', this.url);
-                    
-                    this.fullImage = document.createElement("img");
-                    this.fullImage.onload = function() {
-                        instance.width = instance.fullImage.width;
-                        instance.height = instance.fullImage.height;
-                        
-                        var size = instance.getSize();
-                        var thumbnailURI = resizeImage(instance.fullImage, thumbnailPixelSize, thumbnailPixelSize);
-                        instance.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
-                        this.thumnailURI = thumbnailURI;
-                    };
-                    this.fullImage.src = this.url;
-                }
-                
-                if (this.el.model !== image) {
-                    // a user click will intersect either the tile or the image
-                    this.image.model = image;
-                    this.fullResolutionImage.model = image;
-                    this.tileBackground.model = image;
-                    this.image.view = this;
-                    this.fullResolutionImage.view = this;
-                    this.tileBackground.view = this;
-                }
                 
                 var className = "tile ";
                 // Note: as of Jan 2014, JQuery's addClass and removeClass
@@ -108,6 +112,9 @@ define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Lo
                 }
             }
         },
+        /**
+        * Returns the tile size
+        **/
         getSize: function() {
             return this.size;
         },
@@ -131,7 +138,7 @@ define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Lo
             
             this.requestThumbnailUpdate();
         },
-        // returns the current size, not the max one...
+        // returns the full size
         getWidth: function() {
             return this.width;
         },
@@ -196,17 +203,33 @@ define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Lo
                         m = SVG.SVGSVGElement.createSVGMatrix();
 
                     // no skewing, no rotation
-                    var fullSize = {
-                        width: this.fullImage.width,
-                        height: this.fullImage.height
-                    };
+                    this.getFullImagePromise().then(function(fullImage) {
+                        var fullSize = this.getFullSize();
 
-                    var fit = Transformation.getFitMatrix(fullSize, this.size);
-                    var modelToDevice = m.multiply(fit);
+                        var fit = Transformation.getFitMatrix(fullSize, this.getSize());
+                        var modelToDevice = m.multiply(fit);
 
-                    var thumbnailURI = getSubImage(this.fullImage, this.size, modelToDevice);
-                    this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
+                        var thumbnailURI = getSubImage(fullImage, this.getSize(), modelToDevice);
+                        this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
+                    }.bind(this));
                 }.bind(this), fullResolutionGenerationTimeout);
+        },
+        getFullImagePromise: function() {
+            if (!this.fullImagePromise) {
+                this.fullImagePromise = new Promise(function(resolve) {
+                    var image = this.model;
+                    var url = image.get("url");
+                    var fullImage = document.createElement("img");
+                    fullImage.onload = function() {
+                        resolve(fullImage);
+                    };
+                    fullImage.src = url;
+                }.bind(this));
+            }
+            return this.fullImagePromise;
+        },
+        getFullSize: function() {
+            return this.fullSize;
         }
     });
     
