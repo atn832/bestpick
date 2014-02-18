@@ -4,7 +4,8 @@ require.config({
     paths: {
         backbone: bowerPath + "backbone/backbone",
         underscore: bowerPath + "underscore/underscore",
-        jquery: bowerPath + "jquery/dist/jquery.min"
+        jquery: bowerPath + "jquery/dist/jquery.min",
+        "jquery.mousewheel": bowerPath + "jquery-mousewheel/jquery.mousewheel"
     },
     shim: {
         backbone: ["underscore"]

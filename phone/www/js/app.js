@@ -76,7 +76,7 @@ function initialize(Logger) {
         galleryView.setShowSelected(false);
     });
     
-    require(["gallery", "galleryview", "image", "logger"], function(Gallery, GalleryView, Image, Logger) {
+    require(["gallery", "galleryview", "image", "logger", "jquery.mousewheel"], function(Gallery, GalleryView, Image, Logger, m) {
         var logsBtn = document.getElementById(logsBtnID);
         if (logsBtn) {
             logsBtn.addEventListener("click", function() {
@@ -192,7 +192,7 @@ function initialize(Logger) {
             if (!gv.isShowSelected())
                 return;
             
-            var gestureCenter = event.gesture.center;
+            var gestureCenter = event;
             var center = getPosition(gestureCenter.pageX, gestureCenter.pageY, event.target);
             var factor = 1 + Math.sqrt(Math.abs(event.deltaY)) / 10;
             if (event.deltaY > 0)
