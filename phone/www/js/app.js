@@ -96,23 +96,45 @@ function initialize(Logger) {
         // itself when added to a new parent
         gv.render();
         
+        var prevSelectedImageIndex;
         // put listeners on to images:
         // if touch on it, toggle
         Hammer(gv.el, {prevent_default: true}).on("tap", function(event) {
-            Logger.log("tap", event);
+            Logger.log("tap" + event.shiftKey + event);
+            var shiftKey = event.gesture.touches[0].shiftKey;
             var el = event.target;
             if (el.model) {
                 var image = el.model;
+                var images = g.get("images");
+                var selectedImageIndex = images.indexOf(image);
+                var imagesToProcess = [];
+                if (prevSelectedImageIndex == null) {
+                    // no previously selected index => select only that one
+                    imagesToProcess.push(image);
+                }
+                else if (prevSelectedImageIndex <= selectedImageIndex) {
+                    for (var i = prevSelectedImageIndex; i <= selectedImageIndex; i++)
+                        imagesToProcess.push(images.at(i));
+                }
+                else if (prevSelectedImageIndex > selectedImageIndex) {
+                    for (var i = prevSelectedImageIndex; i < selectedImageIndex; i--)
+                        imagesToProcess.push(images.at(i));
+                }
                 if (galleryView.isShowSelected()) {
                     // toggle favorites
-                    var isFavorite = !el.model.get("isFavorite");
-                    image.set("isFavorite", isFavorite);
+                    var isFavorite = !image.get("isFavorite");
+                    imagesToProcess.forEach(function(image) {
+                        image.set("isFavorite", isFavorite)
+                    });
                 }
                 else {
-                    var isSelected = !el.model.get("isSelected");
+                    var isSelected = !image.get("isSelected");
                     Logger.log("setting is selected");
-                    image.set("isSelected", isSelected);
+                    imagesToProcess.forEach(function(image) {
+                        image.set("isSelected", isSelected);
+                    });
                 }
+                prevSelectedImageIndex = selectedImageIndex;
             }
         });
         

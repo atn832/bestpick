@@ -1,6 +1,6 @@
-define(["testfilesystem", "desktopfilesystem"], function(TestFileSystem, DesktopFileSystem) {
+//define(["testfilesystem", "desktopfilesystem"], function(TestFileSystem, DesktopFileSystem) {
+define(["testfilesystem"], function(FileSystem) {
     return {
-        getInstance: DesktopFileSystem.getInstance
-//        getInstance: TestFileSystem.getInstance
+        getInstance: FileSystem.getInstance
     }
 });

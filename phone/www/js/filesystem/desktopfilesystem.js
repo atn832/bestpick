@@ -1,4 +1,6 @@
 define(["image"], function(Image) {
+    var DefaultPath = "../../../img/";
+    
     String.prototype.endsWith = function(suffix) {
         return this.indexOf(suffix, this.length - suffix.length) !== -1;
     };
@@ -11,7 +13,7 @@ define(["image"], function(Image) {
     DesktopFileSystem.prototype.getDir = function(path) {
         // hardcoded folder for now
         if (!path)
-            path = "img";
+            path = DefaultPath;
         
         var content = fs.readdirSync(path);
         var images = content.filter(isImageName);
