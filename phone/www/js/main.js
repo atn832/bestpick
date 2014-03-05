@@ -1,11 +1,14 @@
 var bowerPath = "../bower_components/";
-require.config({
+requirejs.config({
     baseUrl: "js",
     paths: {
         backbone: bowerPath + "backbone/backbone",
         underscore: bowerPath + "underscore/underscore",
         jquery: bowerPath + "jquery/dist/jquery.min",
-        "jquery.mousewheel": bowerPath + "jquery-mousewheel/jquery.mousewheel"
+        "jquery.mousewheel": bowerPath + "jquery-mousewheel/jquery.mousewheel",
+        filesystem: "filesystem/filesystem",
+        testfilesystem: "filesystem/testfilesystem",
+        desktopfilesystem: "filesystem/desktopfilesystem"
     },
     shim: {
         backbone: ["underscore"]

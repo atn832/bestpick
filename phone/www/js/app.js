@@ -12,31 +12,9 @@ var zoomOutBtn;
 var gallery;
 var galleryView;
 
-var links =
-    [
-    "img/SAM_1615.JPG",
-    "img/SAM_1616.JPG",
-    "img/SAM_1617.JPG",
-    "img/SAM_1618.JPG",
-    "img/SAM_1640.JPG",
-    "img/SAM_1641.JPG",
-    "img/SAM_1642.JPG",
-    "img/IMG_20140113_133216553.jpg",
-    "img/IMG_20140113_133147585.jpg",
-    "img/IMG_20140113_133208878.jpg",
-    "img/IMG_20140113_133150398.jpg",
-    "img/IMG_20140113_133157183.jpg",
-    "img/IMG_20140113_133135059_HDR.jpg",
-    "img/IMG_20140113_133138099.jpg",
-    "img/IMG_20140111_123826003.jpg",
-    "img/IMG_20140111_123823790.jpg",
-    "img/IMG_20140108_174405213.jpg",
-    "img/IMG_20140108_174406969.jpg",
-    ];
-
 document.addEventListener("DOMContentLoaded", function(event) {
     console.log("DOM fully loaded and parsed");
-    require(["logger"], initialize);
+    requirejs(["logger"], initialize);
 });
 
 function initialize(Logger) {
@@ -76,7 +54,7 @@ function initialize(Logger) {
         galleryView.setShowSelected(false);
     });
     
-    require(["gallery", "galleryview", "image", "logger", "jquery.mousewheel"], function(Gallery, GalleryView, Image, Logger, m) {
+    requirejs(["filesystem", "gallery", "galleryview", "image", "logger", "jquery.mousewheel"], function(FileSystem, Gallery, GalleryView, Image, Logger, m) {
         var logsBtn = document.getElementById(logsBtnID);
         if (logsBtn) {
             logsBtn.addEventListener("click", function() {
@@ -97,17 +75,14 @@ function initialize(Logger) {
         Logger.log("initializing gallery");
         var container = document.getElementById(containerID);
         
-        var images = links.map(function(url) {
-            return new Image({url: url});
-        });
-        
         var g = new Gallery();
         gallery = g;
         g.on("all", function(event) {
             Logger.log(event);
         });
 //        console.log("g model", g.get("images"));
-        g.get("images").add(images);
+        var dir = FileSystem.getInstance().getDir();
+        g.get("images").add(dir);
         
         // display images
         var gv = new GalleryView({

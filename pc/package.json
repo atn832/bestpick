@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "start": "nodewebkit ../phone/www"
+  },
+  "devDependencies": {
+    "nodewebkit": ">=0.8.5"
+  }
+}

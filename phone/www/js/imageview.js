@@ -1,7 +1,7 @@
 /**
 * Implementation of an ImageView. It displays an Image whose url is assumed to be static (for simplicity)
 **/
-define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Logger, Transformation, Rectangle, SVG) {
+define(["logger", "filesystem", "transformation", "rectangle", "svg", "backbone"], function(Logger, FileSystem, Transformation, Rectangle, SVG) {
     var fullResolutionGenerationTimeout = 500;
     var thumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
     
@@ -204,13 +204,25 @@ define(["logger", "transformation", "rectangle", "svg", "backbone"], function(Lo
         getFullImagePromise: function() {
             if (!this.fullImagePromise) {
                 this.fullImagePromise = new Promise(function(resolve) {
-                    var image = this.model;
-                    var url = image.get("url");
-                    var fullImage = document.createElement("img");
-                    fullImage.onload = function() {
-                        resolve(fullImage);
-                    };
-                    fullImage.src = url;
+                    try {
+                        var image = this.model;
+                        var fullImage = document.createElement("img");
+                        fullImage.onload = function() {
+                            if (resolve.resolve) {
+                                // Old Promise API used in Node Webkit
+                                var promiseResolver = resolve;
+                                promiseResolver.resolve(fullImage);
+                            }
+                            else
+                                resolve(fullImage);
+                        };
+                        var url = image.get("url");
+                        var uri = FileSystem.getInstance().getDataURI(url);
+                        fullImage.src = uri;
+                    }
+                    catch (e) {
+                        Logger.log(e);
+                    }
                 }.bind(this));
             }
             return this.fullImagePromise;

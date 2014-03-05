@@ -1,0 +1,10 @@
+{
+  "name": "bestpick",
+  "main": "index.html",
+  "window": {
+    "toolbar": true
+  },
+  "devDependencies": {
+    "requirejs": ">=2.1.11"
+  }
+}
