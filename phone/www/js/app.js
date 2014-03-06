@@ -96,7 +96,8 @@ function initialize(Logger) {
         // itself when added to a new parent
         gv.render();
         
-        var prevSelectedImageIndex;
+        var prevSelectedImageIndexStart;
+        var prevSelectedImageIndexEnd;
         // put listeners on to images:
         // if touch on it, toggle
         Hammer(gv.el, {prevent_default: true}).on("tap", function(event) {
@@ -108,33 +109,38 @@ function initialize(Logger) {
                 var images = g.get("images");
                 var selectedImageIndex = images.indexOf(image);
                 var imagesToProcess = [];
-                if (prevSelectedImageIndex == null) {
-                    // no previously selected index => select only that one
-                    imagesToProcess.push(image);
+                var imagesToClearout = [];
+                /*
+                * Utility slice that works even if from > to, and includes to and from
+                */
+                function inclusiveSlice(array, from, to) {
+                    var min = Math.min(from, to);
+                    var max = Math.max(from, to);
+                    return array.slice(min, max + 1);
                 }
-                else if (prevSelectedImageIndex <= selectedImageIndex) {
-                    for (var i = prevSelectedImageIndex; i <= selectedImageIndex; i++)
-                        imagesToProcess.push(images.at(i));
-                }
-                else if (prevSelectedImageIndex > selectedImageIndex) {
-                    for (var i = prevSelectedImageIndex; i < selectedImageIndex; i--)
-                        imagesToProcess.push(images.at(i));
-                }
-                if (galleryView.isShowSelected()) {
-                    // toggle favorites
-                    var isFavorite = !image.get("isFavorite");
-                    imagesToProcess.forEach(function(image) {
-                        image.set("isFavorite", isFavorite)
-                    });
+                if (shiftKey && prevSelectedImageIndexStart != null) {
+                    // only update prevSelectedImageIndex on the first selected item
+                    // as we shift select, we do not update the starting index
+                    imagesToProcess = inclusiveSlice(images, prevSelectedImageIndexStart, selectedImageIndex);
+                    imagesToClearout = inclusiveSlice(images, prevSelectedImageIndexStart, prevSelectedImageIndexEnd);
+                    prevSelectedImageIndexEnd = selectedImageIndex;
                 }
                 else {
-                    var isSelected = !image.get("isSelected");
-                    Logger.log("setting is selected");
-                    imagesToProcess.forEach(function(image) {
-                        image.set("isSelected", isSelected);
-                    });
+                    // toggle the selected image
+                    imagesToProcess.push(image);
+                    prevSelectedImageIndexStart = selectedImageIndex;
+                    prevSelectedImageIndexEnd = selectedImageIndex;
                 }
-                prevSelectedImageIndex = selectedImageIndex;
+                var propertyName = galleryView.isShowSelected()? "isFavorite":  "isSelected";
+                var newPropertyValue = !shiftKey?
+                    !image.get(propertyName) : // alternate
+                    images.at(prevSelectedImageIndexStart).get(propertyName); // copy from selection start
+                imagesToClearout.forEach(function(image) {
+                    image.set(propertyName, !newPropertyValue)
+                });
+                imagesToProcess.forEach(function(image) {
+                    image.set(propertyName, newPropertyValue)
+                });
             }
         });
         
