@@ -52,6 +52,10 @@ input:last-of-type {
     fill: none;
 }
 
+body .gallery .focus {
+    stroke-width: 7;
+}
+
 .gallery .selected {
     stroke: green;
     stroke-width: 5;

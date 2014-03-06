@@ -45,7 +45,6 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
         var el = this.el;
         
         this.svg.setAttribute("width", "100%");
-        this.svg.setAttribute("height", "100%");
         
         // iterate over images
         var gallery = this.model;
