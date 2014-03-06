@@ -1,13 +1,19 @@
-define(["image"], function(Image) {
+define(["image", "util"], function(Image, Util) {
     var DefaultPath = "../../../img/";
     
     String.prototype.endsWith = function(suffix) {
         return this.indexOf(suffix, this.length - suffix.length) !== -1;
     };
     
-    var fs = require("fs");
+    var fs;
+    if (require !== requirejs) {
+        // if require (from nodejs) is defined, use it
+        fs = require("fs");
+    }
     
     function DesktopFileSystem() {
+        if (!fs)
+            throw "The application is not running node.js";
     }
     
     DesktopFileSystem.prototype.getDir = function(path) {
@@ -24,20 +30,29 @@ define(["image"], function(Image) {
         return images;
     }
     
-    var instance = new DesktopFileSystem();
+    DesktopFileSystem.isValid = function() {
+        return fs != undefined;
+    }
     
+    var instance;
     DesktopFileSystem.getInstance = function() {
+        if (!instance)
+            instance = new DesktopFileSystem();
         return instance;
     }
     
     /**
-    * Returns an URI that an ImageElement can understand. Can be an URL or base64 encoded image data
+    * Returns a promise for an URI that an ImageElement can understand. Can be an URL or base64 encoded image data
     **/
     DesktopFileSystem.prototype.getDataURI = function(filepath) {
-        var contents = fs.readFileSync(filepath);
-        var extension = filepath.slice(filepath.lastIndexOf(".") + 1);
-        var dataURI = "data:image/" + extension + ";base64," + Buffer(contents).toString('base64');
-        return dataURI;
+        var p = new Promise(function(resolve) {
+            fs.readFile(filepath, function(err, data) {
+                var extension = filepath.slice(filepath.lastIndexOf(".") + 1);
+                var dataURI = "data:image/" + extension + ";base64," + Buffer(data).toString('base64');
+                Util.resolve(resolve, dataURI);
+            });
+        });
+        return p;
     }
     
     var imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp"];

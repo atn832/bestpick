@@ -23,6 +23,10 @@ define(["image"], function(Image) {
     function TestFileSystem() {
     }
     
+    TestFileSystem.isValid = function() {
+        return true;
+    }
+    
     TestFileSystem.prototype.getDir = function() {
         var images = files.map(function(url) {
             return new Image({url: url});

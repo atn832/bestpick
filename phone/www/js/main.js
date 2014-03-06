@@ -8,7 +8,8 @@ requirejs.config({
         "jquery.mousewheel": bowerPath + "jquery-mousewheel/jquery.mousewheel",
         filesystem: "filesystem/filesystem",
         testfilesystem: "filesystem/testfilesystem",
-        desktopfilesystem: "filesystem/desktopfilesystem"
+        desktopfilesystem: "filesystem/desktopfilesystem",
+        mobilefilesystem: "filesystem/mobilefilesystem"
     },
     shim: {
         backbone: ["underscore"]
