@@ -42,6 +42,12 @@ function initialize(Logger) {
         });
         console.log("removing", toRemove);
         gallery.get("images").remove(toRemove);
+        requirejs(["filesystem"], function(FileSystem) {
+            toRemove.forEach(function(image) {
+                var url = image.get("url");
+                FileSystem.getInstance().remove(url);
+            });
+        });
         
         // unselect all:
         // two-way setting of these is not implemented
@@ -196,7 +202,12 @@ function initialize(Logger) {
                 return;
             
             var gestureCenter = event;
-            var center = getPosition(gestureCenter.pageX, gestureCenter.pageY, event.target);
+            var center;
+            try {
+                center = getPosition(gestureCenter.pageX, gestureCenter.pageY, event.target);
+            } catch (e) {
+                Logger.log("mousewheel out of image", e);
+            }
             var factor = 1 + Math.sqrt(Math.abs(event.deltaY)) / 10;
             if (event.deltaY > 0)
                 factor = 1 / factor;

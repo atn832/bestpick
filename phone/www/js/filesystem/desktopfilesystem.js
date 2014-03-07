@@ -1,4 +1,4 @@
-define(["image", "util"], function(Image, Util) {
+define(["logger", "image", "promise"], function(Logger, Image, Promise) {
     var DefaultPath = "../../../img/";
     
     String.prototype.endsWith = function(suffix) {
@@ -41,6 +41,33 @@ define(["image", "util"], function(Image, Util) {
         return instance;
     }
     
+    var deletedFolder = "todelete";
+    
+    DesktopFileSystem.prototype.remove = function(filepath) {
+        var newpath;
+        var newfilepath;
+        var lastSlashPos = filepath.lastIndexOf("/");
+        if (lastSlashPos > 0) {
+            var folder = filepath.slice(0, lastSlashPos);
+            var filename = filepath.slice(lastSlashPos + 1);
+            newpath = folder + deletedFolder;
+        }
+        else {
+            newpath = deletedFolder;
+        }
+        newfilepath = newpath + "/" + filename;
+        
+        // move file
+        fs.mkdir(newpath, function() {
+            fs.rename(filepath, newfilepath, function(result) {
+                Logger.log(result);
+            });
+        });
+        
+        // delete file
+        //fs.unlink(filepath);
+    };
+    
     /**
     * Returns a promise for an URI that an ImageElement can understand. Can be an URL or base64 encoded image data
     **/
@@ -49,7 +76,7 @@ define(["image", "util"], function(Image, Util) {
             fs.readFile(filepath, function(err, data) {
                 var extension = filepath.slice(filepath.lastIndexOf(".") + 1);
                 var dataURI = "data:image/" + extension + ";base64," + Buffer(data).toString('base64');
-                Util.resolve(resolve, dataURI);
+                resolve(dataURI);
             });
         });
         return p;

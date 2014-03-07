@@ -1,7 +1,7 @@
 /**
 * Implementation of an ImageView. It displays an Image whose url is assumed to be static (for simplicity)
 **/
-define(["logger", "util", "filesystem", "transformation", "rectangle", "svg", "backbone"], function(Logger, Util, FileSystem, Transformation, Rectangle, SVG) {
+define(["logger", "promise", "filesystem", "transformation", "rectangle", "svg", "backbone"], function(Logger, Promise, FileSystem, Transformation, Rectangle, SVG) {
     var fullResolutionGenerationTimeout = 500;
     var thumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
     
@@ -92,7 +92,7 @@ define(["logger", "util", "filesystem", "transformation", "rectangle", "svg", "b
             this.render();
         },
         render: function() {
-//            Logger.log("image.render", this.model.get("url"));
+            Logger.log("image.render", this.model.get("url"));
             var image = this.model;
             if (image) {
                 var instance = this;
@@ -208,14 +208,12 @@ define(["logger", "util", "filesystem", "transformation", "rectangle", "svg", "b
                         var image = this.model;
                         var fullImage = document.createElement("img");
                         fullImage.onload = function() {
-                            Util.resolve(resolve, fullImage);
+                            resolve(fullImage);
                         };
                         var url = image.get("url");
                         var uri = FileSystem.getInstance().getDataURI(url);
                         uri.then(function(uri) {
                             fullImage.src = uri;
-                            var gui = require('nw.gui');
-                            gui.Window.get().title = url;
                         });
                     }
                     catch (e) {

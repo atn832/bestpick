@@ -9,7 +9,8 @@ requirejs.config({
         filesystem: "filesystem/filesystem",
         testfilesystem: "filesystem/testfilesystem",
         desktopfilesystem: "filesystem/desktopfilesystem",
-        mobilefilesystem: "filesystem/mobilefilesystem"
+        mobilefilesystem: "filesystem/mobilefilesystem",
+        promise: "promise-3.2.0" // necessary for webkit on MacOS
     },
     shim: {
         backbone: ["underscore"]

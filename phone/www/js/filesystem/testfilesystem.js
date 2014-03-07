@@ -1,4 +1,4 @@
-define(["image"], function(Image) {
+define(["logger", "promise", "image"], function(Logger, Promise, Image) {
     var files = [
         "img/SAM_1615.JPG",
         "img/SAM_1616.JPG",
@@ -34,12 +34,20 @@ define(["image"], function(Image) {
         return images;
     }
     
+    TestFileSystem.prototype.remove = function(url) {
+        Logger.log("removing " + url);
+    }
+    
     /**
     * Returns an URI that an ImageElement can understand. Can be an URL or base64 encoded image data
     **/
     TestFileSystem.prototype.getDataURI = function(url) {
         // nothing to do, these are links directly usable by image element
-        return url;
+        // could use Promise.cast if not using Promise/A+
+        var p = new Promise(function(resolve) {
+            resolve(url);
+        });
+        return p;
     };
     
     var instance = new TestFileSystem();

@@ -7,10 +7,10 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
         className: "gallery",
         initialize: function() {
             Logger.log("gv init, model:", this.model);
-            this.model.on("all", function(event) {
-                Logger.log("gv model event:", event);
-                this.render();
-            }.bind(this));
+//            this.model.on("all", function(event) {
+//                Logger.log("gv model event:", event);
+//                this.render();
+//            }.bind(this));
             this.imageViews = {};
             
             this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -80,7 +80,6 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
             var imageSizes = viewsToDisplay.map(function(imageView) {
                 return imageView.getFullSize();
             });
-            Logger.log(imageSizes);
             // stretch
             gridSize = getGridSize(gallerySize, imageSizes);
             var tileSize = getTileSize(gallerySize, gridSize);
@@ -154,7 +153,8 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
         }.bind(this));
         
         var minGalleryHeight = latestRowIndex * StandardTileSize + StandardTileSize;
-        if (minGalleryHeight > gallerySize.height) {
+        if (!showSelected && minGalleryHeight > gallerySize.height) {
+            // expand the svg if we're displaying the whole gallery
             this.svg.setAttribute("height", minGalleryHeight);
         }
         else {
@@ -224,6 +224,7 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
     }
     
     function getGridSize(gallerySize, imageSizes) {
+        Logger.log("getGridSize " + JSON.stringify(gallerySize) + " " + JSON.stringify(imageSizes));
         var maxUsedSize;
         var usedSize;
         
@@ -246,7 +247,7 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
                     var imageSize = getStretchedSize(size, tileSize);
                     usedSize += imageSize.width * imageSize.height;
                 });
-                Logger.log(gridWidth, gridHeight, usedSize);
+                Logger.log(gridWidth + " " + gridHeight + " " + usedSize);
                 if (!maxUsedSize || usedSize > maxUsedSize) {
                     bestGridSize = gridSize;
                     maxUsedSize = usedSize;
