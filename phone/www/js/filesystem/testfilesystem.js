@@ -17,7 +17,9 @@ define(["logger", "promise", "image"], function(Logger, Promise, Image) {
         "img/IMG_20140111_123826003.jpg",
         "img/IMG_20140111_123823790.jpg",
         "img/IMG_20140108_174405213.jpg",
-        "img/IMG_20140108_174406969.jpg"
+        "img/IMG_20140108_174406969.jpg",
+//        "img/matrix.gif",
+//        "img/matrix2by2.gif"
     ];
     
     function TestFileSystem() {

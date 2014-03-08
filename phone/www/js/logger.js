@@ -18,10 +18,10 @@ define(function() {
             status.innerHTML = log;
             allLogs += log + "\n";
             
-            if (require !== requirejs) {
-                var gui = require('nw.gui');
-                gui.Window.get().title = message;
-            }
+//            if (require !== requirejs) {
+//                var gui = require('nw.gui');
+//                gui.Window.get().title = message;
+//            }
      },
         showAll: function() {
             alert(allLogs);

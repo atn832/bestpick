@@ -1,5 +1,5 @@
 define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbone"], function(Logger, Gallery, ImageView, GalleryViewSettings, SVG) {
-    var cssBorderWidth = 4;
+    var TileSpacing = 4;
     var StandardTileSize = 100;
     
     var GalleryView = Backbone.View.extend({
@@ -17,6 +17,11 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
             this.svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
             this.svg.setAttribute("version", "1.1");
             this.el.appendChild(this.svg);
+            
+            var instance = this;
+            window.addEventListener("resize", function() {
+                window.requestAnimationFrame(render.bind(instance));
+            });
             
             if (this.model) {
                 this.render();
@@ -75,6 +80,7 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
             }
             return;
         }
+        var tileSize;
         if (showSelected) {
             // respect ratio, fit to screen
             var imageSizes = viewsToDisplay.map(function(imageView) {
@@ -82,34 +88,42 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
             });
             // stretch
             gridSize = getGridSize(gallerySize, imageSizes);
-            var tileSize = getTileSize(gallerySize, gridSize);
-            
-            viewsToDisplay.forEach(function(imageView) {
-                var imageSize = {
-                    width: imageView.width,
-                    height: imageView.height
-                };
-                var stretchedSize = getStretchedSize(imageSize, tileSize);
-                imageView.setSize(tileSize);
-            });
+            tileSize = getTileSize(gallerySize, gridSize);
         }
         else {
-            // fixed tile size
-            gridSize = {
-                width: Math.floor(gallerySize.width / StandardTileSize),
-                height: 1
-            };
-            
-            // restore hard coded size. should match the css's
-            viewsToDisplay.forEach(function(imageView) {
-                imageView.setSize({width: StandardTileSize, height: StandardTileSize});
-            });
+            var maxGalleryWidth = viewsToDisplay.length * (StandardTileSize + TileSpacing) - TileSpacing;
+            if (maxGalleryWidth < gallerySize.width) {
+                // the whole gallery fits in one line. use standard tile size
+                gridSize = {
+                    width: viewsToDisplay.length,
+                    height: 1
+                }
+                tileSize = {
+                    width: StandardTileSize,
+                    height: StandardTileSize
+                };
+            }
+            else {
+                // fixed tile size
+                var gridWidth = Math.floor(gallerySize.width / StandardTileSize);
+                gridSize = {
+                    width: gridWidth,
+                    height: 1
+                };
+
+                var tileSize = getTileSize(gallerySize, gridSize);
+                tileSize.height = tileSize.width;
+            }
         }
         var displaySettings = {
             gridSize: gridSize,
             gallerySize: gallerySize,
             displayedImages: viewsToDisplay
         };
+        
+        viewsToDisplay.forEach(function(imageView) {
+            imageView.setSize(tileSize);
+        });
         
         var isRedrawRequired = !isSame(this.oldDisplaySettings, displaySettings);
         if (!isRedrawRequired) {
@@ -123,15 +137,8 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
         el.innerHTML = "";
         var latestRowIndex = -1;
         var row;
-        var rowHeight;
-        var colWidth;
-        if (showSelected) {
-            rowHeight = gallerySize.height / gridSize.height;
-            colWidth = gallerySize.width / gridSize.width;
-        }
-        else {
-            rowHeight = StandardTileSize;
-            colWidth = StandardTileSize;
+
+        if (!showSelected) {
             // reset scale and translation in displayed tiles
             this.resetTransformation();
         }
@@ -145,10 +152,10 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
                 imageView.el.parentNode.removeChild(imageView.el);
             }
 //            row.appendChild(imageView.el);
-            var x = colIndex * colWidth;
-            var y = rowIndex * rowHeight;
+            var x = colIndex * (tileSize.width + TileSpacing);
+            var y = rowIndex * (tileSize.height + TileSpacing);
             
-            imageView.el.setAttribute("transform", "translate(" + (colIndex * colWidth) + ", " + (rowIndex * rowHeight) + ")");
+            imageView.el.setAttribute("transform", "translate(" + x + ", " + y + ")");
             this.svg.appendChild(imageView.el);
         }.bind(this));
         
@@ -261,8 +268,8 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
         var gridWidth = gridSize.width;
         var gridHeight = gridSize.height;
         var tileSize = {
-            width: bounds.width / gridWidth - 2 * cssBorderWidth,
-            height: bounds.height / gridHeight - 2 * cssBorderWidth
+            width: (bounds.width - (gridWidth - 1) * TileSpacing) / gridWidth ,
+            height: (bounds.height - (gridHeight - 1) * TileSpacing) / gridHeight
         }
         return tileSize;
     }
