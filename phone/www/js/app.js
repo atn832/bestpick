@@ -4,10 +4,12 @@ var keepBtnID = "btnKeep";
 var logsBtnID = "btnLogs";
 var zoomInBtnID = "btnZoomIn";
 var zoomOutBtnID = "btnZoomOut";
+var dirdropID = "dirdrop";
 var selectBtn;
 var keepBtn;
 var zoomInBtn;
 var zoomOutBtn;
+var dirdrop;
 
 var gallery;
 var galleryView;
@@ -18,6 +20,17 @@ document.addEventListener("DOMContentLoaded", function(event) {
 });
 
 function initialize(Logger) {
+    dirdrop = document.getElementById(dirdropID);
+    dirdrop.addEventListener("change", function(evt) {
+        var dir = dirdrop.value
+        Logger.log(dirdrop.value);
+        requirejs(["filesystem"], function(FileSystem) {
+            var images = FileSystem.getInstance().getDir(dirdrop.value);
+            gallery.get("images").set(images);
+            galleryView.render();
+        });
+    });
+    
     selectBtn = document.getElementById(selectBtnID);
     
     selectBtn.addEventListener("click", function() {

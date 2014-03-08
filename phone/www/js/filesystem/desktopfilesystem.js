@@ -1,14 +1,15 @@
 define(["logger", "image", "promise"], function(Logger, Image, Promise) {
-    var DefaultPath = "../../../img/";
+    var DefaultPath = ".";
     
     String.prototype.endsWith = function(suffix) {
         return this.indexOf(suffix, this.length - suffix.length) !== -1;
     };
     
-    var fs;
+    var fs, path;
     if (require !== requirejs) {
         // if require (from nodejs) is defined, use it
         fs = require("fs");
+        path = require("path");
     }
     
     function DesktopFileSystem() {
@@ -16,16 +17,20 @@ define(["logger", "image", "promise"], function(Logger, Image, Promise) {
             throw "The application is not running node.js";
     }
     
-    DesktopFileSystem.prototype.getDir = function(path) {
+    DesktopFileSystem.prototype.getDir = function(dir) {
         // hardcoded folder for now
-        if (!path)
-            path = DefaultPath;
+        if (!dir)
+            dir = DefaultPath;
         
-        var content = fs.readdirSync(path);
+        if (fs.lstatSync(dir).isFile())
+            dir = path.dirname(dir);
+        
+        var content = fs.readdirSync(dir);
+//        var content = fs.readdirSync(dir);
         var images = content.filter(isImageName);
         
         var images = images.map(function(url) {
-            return new Image({url: path + "/" + url});
+            return new Image({url: path.join(dir, url)});
         });
         return images;
     }
@@ -41,21 +46,13 @@ define(["logger", "image", "promise"], function(Logger, Image, Promise) {
         return instance;
     }
     
-    var deletedFolder = "todelete";
+    var DeletedFolderName = "todelete";
     
     DesktopFileSystem.prototype.remove = function(filepath) {
-        var newpath;
-        var newfilepath;
-        var lastSlashPos = filepath.lastIndexOf("/");
-        if (lastSlashPos > 0) {
-            var folder = filepath.slice(0, lastSlashPos);
-            var filename = filepath.slice(lastSlashPos + 1);
-            newpath = folder + deletedFolder;
-        }
-        else {
-            newpath = deletedFolder;
-        }
-        newfilepath = newpath + "/" + filename;
+        var folder = path.dirname(filepath);
+        var filename = path.basename(filepath);
+        var newpath = path.join(folder, DeletedFolderName);
+        var newfilepath = path.join(newpath, filename);
         
         // move file
         fs.mkdir(newpath, function() {
