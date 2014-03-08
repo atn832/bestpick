@@ -50,19 +50,33 @@ define(["logger", "image", "promise"], function(Logger, Image, Promise) {
     
     DesktopFileSystem.prototype.remove = function(filepath) {
         var folder = path.dirname(filepath);
-        var filename = path.basename(filepath);
-        var newpath = path.join(folder, DeletedFolderName);
-        var newfilepath = path.join(newpath, filename);
+        var ext = path.extname(filepath);
+        var filebasename = path.basename(filepath, ext);
         
+        // find all files with same name (to move raws along)
+        var files = fs.readdirSync(folder).filter(function(f) {
+            var ext = path.extname(f);
+            var basename = path.basename(f, ext);
+            return basename === filebasename;
+        })
+        
+        var newpath = path.join(folder, DeletedFolderName);
+        
+        files.forEach(function(f) {
+            this.move(path.join(folder, f), newpath);
+        }.bind(this));
+    };
+    
+    DesktopFileSystem.prototype.move = function(filepath, newpath) {
+        Logger.log("moving" + filepath);
+        var filename = path.basename(filepath);
+        var newfilepath = path.join(newpath, filename);
         // move file
         fs.mkdir(newpath, function() {
             fs.rename(filepath, newfilepath, function(result) {
                 Logger.log(result);
             });
         });
-        
-        // delete file
-        //fs.unlink(filepath);
     };
     
     /**
