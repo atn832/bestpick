@@ -68,7 +68,7 @@ define(["logger", "image", "promise"], function(Logger, Image, Promise) {
     };
     
     DesktopFileSystem.prototype.move = function(filepath, newpath) {
-        Logger.log("moving" + filepath);
+//        Logger.log("moving" + filepath);
         var filename = path.basename(filepath);
         var newfilepath = path.join(newpath, filename);
         // move file
