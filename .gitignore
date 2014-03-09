@@ -2,4 +2,4 @@
 /phone/www/bower_components/*
 /phone/www/node_modules/*
 /node_modules/*
-/webkitbuilds/cache/*
+/webkitbuilds/*
