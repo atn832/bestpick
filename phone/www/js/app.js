@@ -186,10 +186,9 @@ function initialize(Logger) {
             }
             catch (e) {
                 Logger.log(e);
-                center = {x: undefined, y: undefined};
             }
 //            Logger.log("pinch " + relScale);
-            gv.zoom(relScale, center.x, center.y);
+            gv.zoom(relScale, center);
         });
 
         var lastDragCenter;
@@ -224,7 +223,7 @@ function initialize(Logger) {
             var factor = 1 + Math.sqrt(Math.abs(event.deltaY)) / 10;
             if (event.deltaY > 0)
                 factor = 1 / factor;
-            gv.zoom(factor, center.x, center.y);
+            gv.zoom(factor, center);
         });
         
         /**

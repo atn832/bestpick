@@ -1,7 +1,7 @@
 /**
 * Implementation of an ImageView. It displays an Image whose url is assumed to be static (for simplicity)
 **/
-define(["logger", "promise", "filesystem", "transformation", "rectangle", "svg", "backbone"], function(Logger, Promise, FileSystem, Transformation, Rectangle, SVG) {
+define(["logger", "util", "promise", "filesystem", "transformation", "rectangle", "svg", "backbone"], function(Logger, Util, Promise, FileSystem, Transformation, Rectangle, SVG) {
     var fullResolutionGenerationTimeout = 500;
     var thumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
     
@@ -14,7 +14,7 @@ define(["logger", "promise", "filesystem", "transformation", "rectangle", "svg",
 //                Logger.log("iv model changed", event);
                 this.render();
             }.bind(this));
-
+            
             /*
                 the DOM will look like this:
                 <g transform="translate(...)">
@@ -74,20 +74,20 @@ define(["logger", "promise", "filesystem", "transformation", "rectangle", "svg",
             
             this.width = 0;
             this.height = 0;
-            this.getFullImagePromise().then(function(fullImage) {
-                this.fullSize = {
+            this.fullImageSizePromise = this.getFullImagePromise().then(function(fullImage) {
+                return {
                     width: fullImage.width,
                     height: fullImage.height
                 };
-                this.width = fullImage.width;
-                this.height = fullImage.height;
-            }.bind(this));
+            }, Util.onRejected);
             
             // Set up fixed resolution image
             this.getFullImagePromise().then(function(fullImage) {
                 var thumbnailURI = resizeImage(fullImage, thumbnailPixelSize, thumbnailPixelSize);
                 this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
             }.bind(this));
+            
+            this.setVisible(true);
             
             this.render();
         },
@@ -105,6 +105,14 @@ define(["logger", "promise", "filesystem", "transformation", "rectangle", "svg",
                 if (image.get("isFavorite"))
                     className += "favorite ";
                 
+                if (!this.isVisible()) {
+                    Logger.log("hidden");
+                    this.el.setAttribute("class", "hidden");
+                }
+                else {
+                    Logger.log("visible");
+                    this.el.setAttribute("class", "");
+                }
                 //Logger.log("classname:" + className);
                 if (className !== this.className) {
                     this.className = className;
@@ -113,10 +121,10 @@ define(["logger", "promise", "filesystem", "transformation", "rectangle", "svg",
             }
         },
         /**
-        * Returns the size of the full resolution image
+        * Returns a promise for the size of the full resolution image
         **/
-        getFullSize: function() {
-            return this.fullSize;
+        getFullSizePromise: function() {
+            return this.fullImageSizePromise;
         },
         /**
         * Returns the tile size
@@ -190,9 +198,9 @@ define(["logger", "promise", "filesystem", "transformation", "rectangle", "svg",
                         m = SVG.SVGSVGElement.createSVGMatrix();
 
                     // no skewing, no rotation
-                    this.getFullImagePromise().then(function(fullImage) {
-                        var fullSize = this.getFullSize();
-
+                    Promise.all([this.getFullImagePromise(), this.getFullSizePromise()]).then(function(results) {
+                        var fullImage = results[0];
+                        var fullSize = results[1];
                         var fit = Transformation.getFitMatrix(fullSize, this.getSize());
                         var modelToDevice = m.multiply(fit);
 
@@ -222,6 +230,16 @@ define(["logger", "promise", "filesystem", "transformation", "rectangle", "svg",
                 }.bind(this));
             }
             return this.fullImagePromise;
+        },
+        setVisible: function(isVisible) {
+            if (this.visible === isVisible)
+                return;
+            
+            this.visible = isVisible;
+            this.render();
+        },
+        isVisible: function() {
+            return this.visible;
         }
     });
     

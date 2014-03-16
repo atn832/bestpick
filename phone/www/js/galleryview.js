@@ -1,4 +1,4 @@
-define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbone"], function(Logger, Gallery, ImageView, GalleryViewSettings, SVG) {
+define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg", "backbone"], function(Logger, Promise, Gallery, ImageView, GalleryViewSettings, SVG) {
     var TileSpacing = 4;
     var StandardTileSize = 100;
     
@@ -55,15 +55,16 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
         // iterate over images
         var gallery = this.model;
         var showSelected = this.isShowSelected();
+        var allImages = gallery.get("images");
         var imagesToDisplay = showSelected?
-            gallery.get("selectedImages") : gallery.get("images");
+            gallery.get("selectedImages") : allImages;
         var instance = this;
-        var viewsToDisplay = imagesToDisplay.map(function(image) {
-            var imageView = getImageElement.call(instance, image);
-            return imageView;
-        });
         
-        var gridSize;
+        // TODO: remove image elements that are not in the model anymore
+        
+        var allViews = allImages.map(getImageView.bind(this));
+        var viewsToDisplay = imagesToDisplay.map(getImageView.bind(this));
+        
         var gallerySize;
         
         var parentNode = this.el.parentNode;
@@ -81,117 +82,138 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
             }
             return;
         }
-        var tileSize;
-        if (showSelected) {
-            // respect ratio, fit to screen
-            var imageSizes = viewsToDisplay.map(function(imageView) {
-                return imageView.getFullSize();
-            });
-            // stretch
-            gridSize = getGridSize(gallerySize, imageSizes);
-            tileSize = getTileSize(gallerySize, gridSize);
-        }
-        else {
-            var maxGalleryWidth = viewsToDisplay.length * (StandardTileSize + TileSpacing) - TileSpacing;
-            if (maxGalleryWidth < gallerySize.width) {
-                // the whole gallery fits in one line. use standard tile size
-                gridSize = {
-                    width: viewsToDisplay.length,
-                    height: 1
-                }
-                tileSize = {
-                    width: StandardTileSize,
-                    height: StandardTileSize
-                };
+        var gridAndTileSizePromise = new Promise(function(resolve, reject) {
+            try{
+            var gridSize;
+            var tileSize;
+            if (showSelected) {
+                // respect ratio, fit to screen
+                Promise.all(viewsToDisplay.map(function(imageView) {
+                    return imageView.getFullSizePromise();
+                })).then(function(fullImageSizes) {
+                    // stretch
+                    gridSize = getGridSize(gallerySize, fullImageSizes);
+                    tileSize = getTileSize(gallerySize, gridSize);
+                    resolve({
+                        gridSize: gridSize,
+                        tileSize: tileSize
+                    });
+                });
             }
             else {
-                // fixed tile size
-                var gridWidth = Math.floor(gallerySize.width / StandardTileSize);
-                gridSize = {
-                    width: gridWidth,
-                    height: 1
-                };
+                var maxGalleryWidth = viewsToDisplay.length * (StandardTileSize + TileSpacing) - TileSpacing;
+                if (maxGalleryWidth < gallerySize.width) {
+                    // the whole gallery fits in one line. use standard tile size
+                    gridSize = {
+                        width: viewsToDisplay.length,
+                        height: 1
+                    }
+                    tileSize = {
+                        width: StandardTileSize,
+                        height: StandardTileSize
+                    };
+                }
+                else {
+                    // fixed tile size
+                    var gridWidth = Math.floor(gallerySize.width / StandardTileSize);
+                    gridSize = {
+                        width: gridWidth,
+                        height: 1
+                    };
 
-                var tileSize = getTileSize(gallerySize, gridSize);
-                tileSize.height = tileSize.width;
+                    tileSize = getTileSize(gallerySize, gridSize);
+                    tileSize.height = tileSize.width;
+                }
+                resolve({
+                    gridSize: gridSize,
+                    tileSize: tileSize
+                });
             }
-        }
-        var displaySettings = {
-            gridSize: gridSize,
-            gallerySize: gallerySize,
-            displayedImages: viewsToDisplay
-        };
-        
-        viewsToDisplay.forEach(function(imageView) {
-            imageView.setSize(tileSize);
+            }
+            catch(e) {
+                Logger.log(e);
+            }
         });
-        
-        var isRedrawRequired = !isSame(this.oldDisplaySettings, displaySettings);
-        if (!isRedrawRequired) {
-            Logger.log("gallery view. render unnecessary");
-            return;
-        }
-        this.oldDisplaySettings = displaySettings;
-        
-        Logger.log("clear gallery view");
-//        Logger.log("grid size" + gridSize);
-        el.innerHTML = "";
-        var latestRowIndex = -1;
-        var row;
+        gridAndTileSizePromise.then(function(result) {
+			try{
+			var tileSize = result.tileSize;
+			var gridSize = result.gridSize;
+            var displaySettings = {
+                gridSize: gridSize,
+                gallerySize: gallerySize,
+                displayedImages: viewsToDisplay
+            };
 
-        if (!showSelected) {
-            // reset scale and translation in displayed tiles
-            this.resetTransformation();
-        }
-        SVG.clear(this.svg);
-        viewsToDisplay.forEach(function(imageView, index) {
-            var rowIndex = Math.floor(index / gridSize.width);
-            var colIndex = index % gridSize.width;
-            latestRowIndex = rowIndex;
-            
-            if (imageView.el.parentNode) {
-                imageView.el.parentNode.removeChild(imageView.el);
+            viewsToDisplay.forEach(function(imageView) {
+                imageView.setSize(tileSize);
+            });
+
+            var isRedrawRequired = !isSame(this.oldDisplaySettings, displaySettings);
+            if (!isRedrawRequired) {
+                Logger.log("gallery view. render unnecessary");
+                return;
             }
-//            row.appendChild(imageView.el);
-            var x = colIndex * (tileSize.width + TileSpacing);
-            var y = rowIndex * (tileSize.height + TileSpacing);
-            
-            imageView.el.setAttribute("transform", "translate(" + x + ", " + y + ")");
-            this.svg.appendChild(imageView.el);
+            this.oldDisplaySettings = displaySettings;
+
+            Logger.log("clear gallery view");
+    //        Logger.log("grid size" + gridSize);
+            var latestRowIndex = -1;
+            var row;
+
+            if (!showSelected) {
+                // reset scale and translation in displayed tiles
+                this.resetTransformation();
+            }
+            allViews.forEach(function(imageView) {
+                if (imageView.el.parentElement !== this.svg)
+                    this.svg.appendChild(imageView.el);
+
+                imageView.setVisible(false);
+            }.bind(this));
+            viewsToDisplay.forEach(function(imageView, index) {
+                var rowIndex = Math.floor(index / gridSize.width);
+                var colIndex = index % gridSize.width;
+                latestRowIndex = rowIndex;
+
+                var x = colIndex * (tileSize.width + TileSpacing);
+                var y = rowIndex * (tileSize.height + TileSpacing);
+
+                imageView.el.setAttribute("transform", "translate(" + x + ", " + y + ")");
+                imageView.setVisible(true);
+            }.bind(this));
+
+            var minGalleryHeight = latestRowIndex * StandardTileSize + StandardTileSize;
+            if (!showSelected && minGalleryHeight > gallerySize.height) {
+                // expand the svg if we're displaying the whole gallery
+                this.svg.setAttribute("height", minGalleryHeight);
+            }
+            else {
+                this.svg.setAttribute("height", "100%");
+            }
+			}
+			catch(e) {
+				Logger.log(e);
+			}
         }.bind(this));
-        
-        var minGalleryHeight = latestRowIndex * StandardTileSize + StandardTileSize;
-        if (!showSelected && minGalleryHeight > gallerySize.height) {
-            // expand the svg if we're displaying the whole gallery
-            this.svg.setAttribute("height", minGalleryHeight);
-        }
-        else {
-            this.svg.setAttribute("height", "100%");
-        }
-        this.el.appendChild(this.svg);
     }
     
     /**
     * Scales all the displayed images
     * @param s the scale
-    * @param cx the X coordinate of the center
-    * @param cy the Y coordinate of the center
+    * @param c the position of the center
     **/
-    function zoom(s, _cx, _cy) {
+    function zoom(s, c) {
         this.getDisplayedImages().forEach(function(image) {
-            var size = image.getSize();
             // use the center if center is undefined
-            var cx, cy;
-            if (_cx === undefined) {
-                cx = size.width / 2;
-                cy = size.height / 2;
+            if (c === undefined) {
+                var size = image.getSize();
+                c = {
+                    x: size.width / 2,
+                    y: size.height / 2
+                };
             }
-            else {
-                cx = _cx;
-                cy = _cy;
-            }
-            var translateMinusC = "translate(" + -cx + ", " + -cy + ")";
-            var translateC = "translate(" + cx + ", " + cy + ")";
+            var translateMinusC = "translate(" + -c.x + ", " + -c.y + ")";
+            var translateC = "translate(" + c.x + ", " + c.y + ")";
             image.setTransformation(translateC +
                          " matrix(" + s + ", 0, 0, " + s + ", 0, 0) " +
                          translateMinusC + " " + image.getTransformation());
@@ -220,7 +242,7 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
         this.setTransformation("");
     }
     
-    function getImageElement(image) {
+    function getImageView(image) {
         var cid = image.cid;
         if (!(cid in this.imageViews)) {
             // make the image element

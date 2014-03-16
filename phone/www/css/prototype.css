@@ -55,6 +55,10 @@ svg {
     fill: none;
 }
 
+.hidden {
+    visibility: hidden;
+}
+
 body .gallery .focus {
     stroke-width: 7;
 }

@@ -3,6 +3,7 @@ define(function() {
     var allLogs = "";
     return {
         log: function(message) {
+			return;	// test production performance
 //            if (console && console.log)
 //                console.log(arguments);
             

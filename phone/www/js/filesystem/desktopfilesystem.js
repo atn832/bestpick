@@ -27,11 +27,17 @@ define(["logger", "image", "promise"], function(Logger, Image, Promise) {
         
         var content = fs.readdirSync(dir);
 //        var content = fs.readdirSync(dir);
-        var images = content.filter(isImageName);
+        var imagePaths = content.filter(isImageName);
         
-        var images = images.map(function(url) {
+        var images = imagePaths.map(function(url) {
             return new Image({url: path.join(dir, url)});
         });
+		/*for (var i = 0; i < 10; i++) {
+			images = images.concat(imagePaths.map(function(url) {
+				return new Image({url: path.join(dir, url)});
+			}));
+		}*/
+		
         return images;
     }
     
