@@ -43,7 +43,36 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         prepend: prepend,
         resetTransformation: resetTransformation,
         setTransformation: setTransformation,
-        getDisplayedImages: getDisplayedImages
+        getDisplayedImages: getDisplayedImages,
+        getAllGalleryImages: function() {
+            var gallery = this.model;
+            var allImages = gallery.get("images");
+            return allImages;
+        },
+        getSelectedGalleryImages: function() {
+            var gallery = this.model;
+            var selectedImages = gallery.get("selectedImages");
+            return selectedImages;
+        },
+        removeOrphanImages: function() {
+            var allImages = this.getAllGalleryImages();
+            var imageViewsToRemove = [];
+            for (var cid in this.imageViews) {
+                var value = this.imageViews[cid];
+                if (!(value instanceof ImageView)) continue;
+
+                var imageView = value;
+                var image = imageView.model;
+                if (allImages.indexOf(image) < 0)
+                    imageViewsToRemove.push(imageView);
+            }
+            imageViewsToRemove.forEach(function(imageView) {
+                imageView.el.parentElement.removeChild(imageView.el);
+                var image = imageView.model;
+                var cid = image.cid;
+                delete this.imageViews[cid];
+            }.bind(this));
+        }
     });
 
     function render() {
@@ -53,17 +82,16 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         this.svg.setAttribute("width", "100%");
         
         // iterate over images
-        var gallery = this.model;
         var showSelected = this.isShowSelected();
-        var allImages = gallery.get("images");
+        var allGalleryImages = this.getAllGalleryImages();
         var imagesToDisplay = showSelected?
-            gallery.get("selectedImages") : allImages;
+            this.getSelectedGalleryImages() : allGalleryImages;
         var instance = this;
         
-        // TODO: remove image elements that are not in the model anymore
-        
-        var allViews = allImages.map(getImageView.bind(this));
+        var allViews = allGalleryImages.map(getImageView.bind(this));
         var viewsToDisplay = imagesToDisplay.map(getImageView.bind(this));
+                
+        this.removeOrphanImages();
         
         var gallerySize;
         
