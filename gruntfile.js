@@ -13,10 +13,14 @@ module.exports = function(grunt) {
                 '!./phone/www/img/*'    // ignore hardcoded images
             ]
         },
-        clean: ['webkitbuilds/releases']
+        clean: ['webkitbuilds/releases'],
+        qunit: {
+            all: ['phone/www/tests/**/*.html']
+        }
     })
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-node-webkit-builder');
+    grunt.loadNpmTasks('grunt-contrib-qunit');
     
     // Default task(s).
     grunt.registerTask('default', ['clean', 'nodewebkit']);
