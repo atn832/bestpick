@@ -63,3 +63,60 @@ require(["rectangle"], function(Rectangle) {
         ok(i1.height === 2);
     });
 });
+
+require(["variablepriorityqueue", "job"], function(VPQ, Job) {
+    var queues = [new VPQ(), new VPQ(), new VPQ()];
+    
+    var jobs = [
+        new Job(Job.Priority.Low, function(resolve, reject) {
+            setTimeout(function() {
+                console.log("done");
+            }, 1000);
+        }), new Job(Job.Priority.High, function(resolve, reject) {
+            setTimeout(function() {
+                console.log("done");
+            }, 1000);
+        }), new Job(Job.Priority.Low, function(resolve, reject) {
+            setTimeout(function() {
+                console.log("done");
+            }, 1000);
+        }), new Job(Job.Priority.High, function(resolve, reject) {
+            setTimeout(function() {
+                console.log("done");
+            }, 1000);
+        })
+    ];
+    queues.forEach(function(queue) {
+        jobs.forEach(function(job) {
+            queue.enqueue(job);
+        });
+    });
+    
+    function getDequeueSequence(queue, jobs) {
+        var indexes = [];
+        while (!queue.isEmpty()) {
+            var job = queue.dequeue();
+            indexes.push(jobs.indexOf(job));
+        }
+        return indexes;
+    }
+    // expected order: 1, 3, 0, 2
+    test("queue0", function() {
+        deepEqual(getDequeueSequence(queues[0], jobs), [1, 3, 0, 2]);
+    });
+    
+    jobs[1].set("priority", Job.Priority.Low);
+    // expected order: 3, 0, 2, 1
+    test("queue1", function() {
+        deepEqual(getDequeueSequence(queues[1], jobs), [3, 0, 2, 1]);
+    });
+    
+    jobs[2].set("priority", Job.Priority.High);
+    // expected order: 3, 2, 0, 1
+    test("queue2", function() {
+        deepEqual(getDequeueSequence(queues[2], jobs), [3, 2, 0, 1]);
+    });
+    
+//    q.enqueue(job1);
+//    q.queue(job);
+});
