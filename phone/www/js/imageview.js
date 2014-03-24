@@ -75,6 +75,7 @@ define(["logger", "util", "promise", "filesystem", "transformation", "rectangle"
             this.width = 0;
             this.height = 0;
             this.fullImageSizePromise = this.getFullImagePromise().then(function(fullImage) {
+                Logger.log("fullsize promise");
                 return {
                     width: fullImage.width,
                     height: fullImage.height
@@ -82,6 +83,8 @@ define(["logger", "util", "promise", "filesystem", "transformation", "rectangle"
             }, Util.onRejected);
             
             // Set up fixed resolution image
+            // we don't need the result.
+            // just make sure the next thumbnail generation is done after the previous one is done
             this.getFullImagePromise().then(function(fullImage) {
                 var thumbnailURI = resizeImage(fullImage, thumbnailPixelSize, thumbnailPixelSize);
                 this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
@@ -210,8 +213,9 @@ define(["logger", "util", "promise", "filesystem", "transformation", "rectangle"
                 }.bind(this), fullResolutionGenerationTimeout);
         },
         getFullImagePromise: function() {
-            if (!this.fullImagePromise) {
-                this.fullImagePromise = new Promise(function(resolve) {
+//            if (!this.fullImagePromise) {
+//                this.fullImagePromise = new Promise(function(resolve) {
+                return new Promise(function(resolve) {
                     try {
                         var image = this.model;
                         var fullImage = document.createElement("img");
@@ -219,8 +223,10 @@ define(["logger", "util", "promise", "filesystem", "transformation", "rectangle"
                             resolve(fullImage);
                         };
                         var url = image.get("url");
+                        Logger.log("setting fullimage on img", url);
                         var uri = FileSystem.getInstance().getDataURI(url);
                         uri.then(function(uri) {
+                            Logger.log("setting fullimage", url);
                             fullImage.src = uri;
                         });
                     }
@@ -228,8 +234,8 @@ define(["logger", "util", "promise", "filesystem", "transformation", "rectangle"
                         Logger.log(e);
                     }
                 }.bind(this));
-            }
-            return this.fullImagePromise;
+//            }
+//            return this.fullImagePromise;
         },
         setVisible: function(isVisible) {
             if (this.visible === isVisible)
@@ -247,7 +253,7 @@ define(["logger", "util", "promise", "filesystem", "transformation", "rectangle"
     * Resize an image and return the resized image's data URI
     **/
     function resizeImage(srcImageObject, width, height) {
-//        Logger.log("resizeImage" + width + "," + height);
+        Logger.log("resizeImage" + width + "," + height);
         var newWidth = width;
         var newHeight = height;
     
@@ -272,6 +278,7 @@ define(["logger", "util", "promise", "filesystem", "transformation", "rectangle"
     * @param matrix matrix of the full transformation from src image size to device (ie it also contains fit transformation in it)
     **/
     function getSubImage(srcImageObject, thumbnailSize, matrix) {
+        Logger.log("get sub image");
         // New canvas
         var dst_canvas = document.createElement('canvas');
         dst_canvas.width = thumbnailSize.width;
