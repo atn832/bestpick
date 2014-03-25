@@ -16,7 +16,8 @@ define(function() {
             var n = d.toLocaleTimeString();
             var log = n + ": " + message;
             console.log(log);
-            status.innerHTML = log;
+            if (status)
+                status.innerHTML = log;
             allLogs += log + "\n";
             
 //            if (require !== requirejs) {
