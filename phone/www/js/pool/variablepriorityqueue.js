@@ -28,9 +28,7 @@ define(["logger", "job", "backbone"], function(Logger, Job, Backbone) {
     });
     
     function jobBucketUpdate(job, newPriority) {
-        Logger.log("changing");
         var oldPriority = job.previous("priority");
-        Logger.log("old new", oldPriority, newPriority);
         var oldBucket = this.buckets[oldPriority];
         var newBucket = this.buckets[newPriority];
         oldBucket.splice(oldBucket.indexOf(job), 1);

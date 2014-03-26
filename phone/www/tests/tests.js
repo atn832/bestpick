@@ -64,37 +64,46 @@ require(["rectangle"], function(Rectangle) {
     });
 });
 
-require(["variablepriorityqueue", "job"], function(VPQ, Job) {
-    var queues = [new VPQ(), new VPQ(), new VPQ(), new VPQ()];
+require(["job", "variablepriorityqueue", "pool"], function(Job, VPQ, Pool) {
+    var timeout = 500;
+    
+    var queues = [new VPQ(), new VPQ(), new VPQ(), new VPQ(), new VPQ()];
+    
+    // receives the result of a pool that runs a queue
+    var result = [];
     
     var jobs = [
         new Job({
             priority: Job.Priority.Low,
             f: function(resolve, reject) {
                 setTimeout(function() {
-                    console.log("done");
-                }, 1000);
+                    result.push(0);
+                    resolve();
+                }, timeout);
             }
         }), new Job({
             priority: Job.Priority.High,
             f: function(resolve, reject) {
                 setTimeout(function() {
-                    console.log("done");
-                }, 1000);
+                    result.push(1);
+                    resolve();
+                }, timeout);
             }
         }), new Job({
             priority: Job.Priority.Low,
             f: function(resolve, reject) {
                 setTimeout(function() {
-                    console.log("done");
-                }, 1000);
+                    result.push(2);
+                    resolve();
+                }, timeout);
             }
         }), new Job({
             priority: Job.Priority.High,
             f: function(resolve, reject) {
                 setTimeout(function() {
-                    console.log("done");
-                }, 1000);
+                    result.push(3);
+                    resolve();
+                }, timeout);
             }
         })
     ];
@@ -136,4 +145,11 @@ require(["variablepriorityqueue", "job"], function(VPQ, Job) {
         deepEqual(getDequeueSequence(queues[3], jobs), [1, 0]);
     });
     
+    var pool = new Pool();
+    pool.process(queues[4]);
+    setTimeout(function() {
+        test("pool", function() {
+            deepEqual(result, [3, 2, 1, 0]);
+        });
+    }, timeout * (jobs.length + 1));
 });

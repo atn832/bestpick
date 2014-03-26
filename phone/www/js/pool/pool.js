@@ -1,4 +1,4 @@
-define([], function() {
+define(["logger"], function(Logger) {
     function Pool() {
     };
     
@@ -18,7 +18,8 @@ define([], function() {
             }
             
             // get the top priority item
-            var f = queue.dequeue();
+            var job = queue.dequeue();
+            var f = job.get("f");
             
             // run it
             var p = new Promise(f);
