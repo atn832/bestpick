@@ -12,6 +12,7 @@ define(["logger", "job", "backbone"], function(Logger, Job, Backbone) {
             job.on("change:priority", this.jobChangeListener);
             var bucket = this.buckets[job.get("priority")];
             bucket.push(job);
+            this.trigger("enqueue", job);
         },
         dequeue: function() {
             var bucket = this.buckets[Job.Priority.High].length > 0?
@@ -20,6 +21,7 @@ define(["logger", "job", "backbone"], function(Logger, Job, Backbone) {
                 return null;
             var job = bucket.shift();
             job.off("change:priority", this.jobChangeListener);
+            this.trigger("dequeue", job);
             return job;
         },
         isEmpty: function() {

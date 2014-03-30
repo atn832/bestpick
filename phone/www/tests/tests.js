@@ -20,7 +20,7 @@ require(["transformation"], function(Transformation) {
         height: 200
     }
     var fitM = Transformation.getFitMatrix(fullSize, thumbnailSize);
-    console.log(fitM);
+//    console.log(fitM);
     test("getFitMatrix", function() {
         ok(fitM.a === .5);
         ok(fitM.b === 0);
@@ -65,7 +65,7 @@ require(["rectangle"], function(Rectangle) {
 });
 
 require(["job", "variablepriorityqueue", "pool"], function(Job, VPQ, Pool) {
-    var timeout = 500;
+    var timeout = 100;
     
     var queues = [new VPQ(), new VPQ(), new VPQ(), new VPQ(), new VPQ()];
     
@@ -151,5 +151,15 @@ require(["job", "variablepriorityqueue", "pool"], function(Job, VPQ, Pool) {
         test("pool", function() {
             deepEqual(result, [3, 2, 1, 0]);
         });
+        repopulatePool();
     }, timeout * (jobs.length + 1));
+    
+    function repopulatePool() {
+        queues[4].enqueue(jobs[0]);
+        setTimeout(function() {
+            test("pool, added on the fly", function() {
+                deepEqual(result, [3, 2, 1, 0, 0]);
+            });
+        }, timeout * 2);
+    }
 });
