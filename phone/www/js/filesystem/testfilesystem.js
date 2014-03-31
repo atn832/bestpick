@@ -1,4 +1,4 @@
-define(["image"], function(Image) {
+define(["logger", "promise", "image"], function(Logger, Promise, Image) {
     var files = [
         "img/SAM_1615.JPG",
         "img/SAM_1616.JPG",
@@ -17,10 +17,16 @@ define(["image"], function(Image) {
         "img/IMG_20140111_123826003.jpg",
         "img/IMG_20140111_123823790.jpg",
         "img/IMG_20140108_174405213.jpg",
-        "img/IMG_20140108_174406969.jpg"
+        "img/IMG_20140108_174406969.jpg",
+//        "img/matrix.gif",
+//        "img/matrix2by2.gif"
     ];
     
     function TestFileSystem() {
+    }
+    
+    TestFileSystem.isValid = function() {
+        return true;
     }
     
     TestFileSystem.prototype.getDir = function() {
@@ -30,12 +36,20 @@ define(["image"], function(Image) {
         return images;
     }
     
+    TestFileSystem.prototype.remove = function(url) {
+        Logger.log("removing " + url);
+    }
+    
     /**
     * Returns an URI that an ImageElement can understand. Can be an URL or base64 encoded image data
     **/
     TestFileSystem.prototype.getDataURI = function(url) {
         // nothing to do, these are links directly usable by image element
-        return url;
+        // could use Promise.cast if not using Promise/A+
+        var p = new Promise(function(resolve) {
+            resolve(url);
+        });
+        return p;
     };
     
     var instance = new TestFileSystem();

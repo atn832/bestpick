@@ -1,7 +1,7 @@
 /**
 * Implementation of an ImageView. It displays an Image whose url is assumed to be static (for simplicity)
 **/
-define(["logger", "filesystem", "transformation", "rectangle", "svg", "backbone"], function(Logger, FileSystem, Transformation, Rectangle, SVG) {
+define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "transformation", "rectangle", "svg", "backbone"], function(Logger, Util, Promise, ImageProcessor, Job, FileSystem, Transformation, Rectangle, SVG) {
     var fullResolutionGenerationTimeout = 500;
     var thumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
     
@@ -14,7 +14,7 @@ define(["logger", "filesystem", "transformation", "rectangle", "svg", "backbone"
 //                Logger.log("iv model changed", event);
                 this.render();
             }.bind(this));
-
+            
             /*
                 the DOM will look like this:
                 <g transform="translate(...)">
@@ -74,25 +74,54 @@ define(["logger", "filesystem", "transformation", "rectangle", "svg", "backbone"
             
             this.width = 0;
             this.height = 0;
-            this.getFullImagePromise().then(function(fullImage) {
-                this.fullSize = {
-                    width: fullImage.width,
-                    height: fullImage.height
-                };
-                this.width = fullImage.width;
-                this.height = fullImage.height;
-            }.bind(this));
+            
+            var instance = this;
+            this.fullImageSizePromise = new Promise(function(resolveMain, reject) {
+                Logger.log("enqueuing job: full size request");
+                function getFullImageSize(resolve, reject) {
+                    instance.getFullImagePromise().then(function(fullImage) {
+                        Logger.log("fullsize promise");
+                        resolveMain({
+                            width: fullImage.width,
+                            height: fullImage.height
+                        });
+                        resolve();
+                    }, Util.onRejected);
+                }
+                try {
+                    ImageProcessor.getInstance().getQueue().enqueue(new Job({
+                        priority: Job.Priority.High,
+                        f: getFullImageSize
+                    }));
+                }
+                catch(e) {
+                    Logger.log("exception enqueuing full size request", e);
+                }
+            });
             
             // Set up fixed resolution image
-            this.getFullImagePromise().then(function(fullImage) {
-                var thumbnailURI = resizeImage(fullImage, thumbnailPixelSize, thumbnailPixelSize);
-                this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
-            }.bind(this));
+            // we don't need the result.
+            // just make sure the next thumbnail generation is done after the previous one is done
+            function setImageThumbnail(resolve, reject) {
+                Logger.log("setting image thumbnail");
+                instance.getFullImagePromise().then(function(fullImage) {
+                    Logger.log("resizing image for thumbnail");
+                    var thumbnailURI = resizeImage(fullImage, thumbnailPixelSize, thumbnailPixelSize);
+                    instance.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
+                    resolve();
+                });
+            }
+            Logger.log("enqueuing job: set thumbnail");
+            ImageProcessor.getInstance().getQueue().enqueue(new Job({
+                priority: Job.Priority.High,
+                f: setImageThumbnail
+            }));
+            
+            this.setVisible(true);
             
             this.render();
         },
         render: function() {
-//            Logger.log("image.render", this.model.get("url"));
             var image = this.model;
             if (image) {
                 var instance = this;
@@ -105,6 +134,14 @@ define(["logger", "filesystem", "transformation", "rectangle", "svg", "backbone"
                 if (image.get("isFavorite"))
                     className += "favorite ";
                 
+                if (!this.isVisible()) {
+//                    Logger.log("hidden");
+                    this.el.setAttribute("class", "hidden");
+                }
+                else {
+//                    Logger.log("visible");
+                    this.el.setAttribute("class", "");
+                }
                 //Logger.log("classname:" + className);
                 if (className !== this.className) {
                     this.className = className;
@@ -113,10 +150,10 @@ define(["logger", "filesystem", "transformation", "rectangle", "svg", "backbone"
             }
         },
         /**
-        * Returns the size of the full resolution image
+        * Returns a promise for the size of the full resolution image
         **/
-        getFullSize: function() {
-            return this.fullSize;
+        getFullSizePromise: function() {
+            return this.fullImageSizePromise;
         },
         /**
         * Returns the tile size
@@ -190,42 +227,57 @@ define(["logger", "filesystem", "transformation", "rectangle", "svg", "backbone"
                         m = SVG.SVGSVGElement.createSVGMatrix();
 
                     // no skewing, no rotation
-                    this.getFullImagePromise().then(function(fullImage) {
-                        var fullSize = this.getFullSize();
+                    var instance = this;
+                    function generateSubtile(resolve, reject) {
+                        Promise.all([instance.getFullImagePromise(), instance.getFullSizePromise()]).then(function(results) {
+                            var fullImage = results[0];
+                            var fullSize = results[1];
+                            var fit = Transformation.getFitMatrix(fullSize, instance.getSize());
+                            var modelToDevice = m.multiply(fit);
 
-                        var fit = Transformation.getFitMatrix(fullSize, this.getSize());
-                        var modelToDevice = m.multiply(fit);
+                            var thumbnailURI = getSubImage(fullImage, instance.getSize(), modelToDevice);
+                            instance.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
+                            resolve();
+                        });
+                    }
+                    Logger.log("enqueuing job: generate subtile");
+                    ImageProcessor.getInstance().getQueue().enqueue(new Job({
+                        priority: Job.Priority.High,
+                        f: generateSubtile
+                    }));
 
-                        var thumbnailURI = getSubImage(fullImage, this.getSize(), modelToDevice);
-                        this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
-                    }.bind(this));
                 }.bind(this), fullResolutionGenerationTimeout);
         },
         getFullImagePromise: function() {
-            if (!this.fullImagePromise) {
-                this.fullImagePromise = new Promise(function(resolve) {
-                    try {
-                        var image = this.model;
-                        var fullImage = document.createElement("img");
-                        fullImage.onload = function() {
-                            if (resolve.resolve) {
-                                // Old Promise API used in Node Webkit
-                                var promiseResolver = resolve;
-                                promiseResolver.resolve(fullImage);
-                            }
-                            else
-                                resolve(fullImage);
-                        };
-                        var url = image.get("url");
-                        var uri = FileSystem.getInstance().getDataURI(url);
+            return new Promise(function(resolve) {
+                try {
+                    var image = this.model;
+                    var fullImage = document.createElement("img");
+                    fullImage.onload = function() {
+                        resolve(fullImage);
+                    };
+                    var url = image.get("url");
+                    Logger.log("setting fullimage on img", url);
+                    var uri = FileSystem.getInstance().getDataURI(url);
+                    uri.then(function(uri) {
+                        Logger.log("setting fullimage", url);
                         fullImage.src = uri;
-                    }
-                    catch (e) {
-                        Logger.log(e);
-                    }
-                }.bind(this));
-            }
-            return this.fullImagePromise;
+                    });
+                }
+                catch (e) {
+                    Logger.log(e);
+                }
+            }.bind(this));
+        },
+        setVisible: function(isVisible) {
+            if (this.visible === isVisible)
+                return;
+            
+            this.visible = isVisible;
+            this.render();
+        },
+        isVisible: function() {
+            return this.visible;
         }
     });
     
@@ -233,7 +285,7 @@ define(["logger", "filesystem", "transformation", "rectangle", "svg", "backbone"
     * Resize an image and return the resized image's data URI
     **/
     function resizeImage(srcImageObject, width, height) {
-//        Logger.log("resizeImage" + width + "," + height);
+        Logger.log("resizeImage" + width + "," + height);
         var newWidth = width;
         var newHeight = height;
     
@@ -258,6 +310,7 @@ define(["logger", "filesystem", "transformation", "rectangle", "svg", "backbone"
     * @param matrix matrix of the full transformation from src image size to device (ie it also contains fit transformation in it)
     **/
     function getSubImage(srcImageObject, thumbnailSize, matrix) {
+        Logger.log("get sub image");
         // New canvas
         var dst_canvas = document.createElement('canvas');
         dst_canvas.width = thumbnailSize.width;

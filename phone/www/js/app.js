@@ -4,10 +4,12 @@ var keepBtnID = "btnKeep";
 var logsBtnID = "btnLogs";
 var zoomInBtnID = "btnZoomIn";
 var zoomOutBtnID = "btnZoomOut";
+var dirdropID = "dirdrop";
 var selectBtn;
 var keepBtn;
 var zoomInBtn;
 var zoomOutBtn;
+var dirdrop;
 
 var gallery;
 var galleryView;
@@ -18,6 +20,19 @@ document.addEventListener("DOMContentLoaded", function(event) {
 });
 
 function initialize(Logger) {
+    dirdrop = document.getElementById(dirdropID);
+    if (dirdrop) {
+        dirdrop.addEventListener("change", function(evt) {
+            var dir = dirdrop.value
+            Logger.log(dirdrop.value);
+            requirejs(["filesystem"], function(FileSystem) {
+                var images = FileSystem.getInstance().getDir(dirdrop.value);
+                gallery.get("images").set(images);
+                galleryView.render();
+            });
+        });
+    }
+    
     selectBtn = document.getElementById(selectBtnID);
     
     selectBtn.addEventListener("click", function() {
@@ -42,6 +57,12 @@ function initialize(Logger) {
         });
         console.log("removing", toRemove);
         gallery.get("images").remove(toRemove);
+        requirejs(["filesystem"], function(FileSystem) {
+            toRemove.forEach(function(image) {
+                var url = image.get("url");
+                FileSystem.getInstance().remove(url);
+            });
+        });
         
         // unselect all:
         // two-way setting of these is not implemented
@@ -77,10 +98,6 @@ function initialize(Logger) {
         
         var g = new Gallery();
         gallery = g;
-        g.on("all", function(event) {
-            Logger.log(event);
-        });
-//        console.log("g model", g.get("images"));
         var dir = FileSystem.getInstance().getDir();
         g.get("images").add(dir);
         
@@ -96,23 +113,51 @@ function initialize(Logger) {
         // itself when added to a new parent
         gv.render();
         
+        var prevSelectedImageIndexStart;
+        var prevSelectedImageIndexEnd;
         // put listeners on to images:
         // if touch on it, toggle
         Hammer(gv.el, {prevent_default: true}).on("tap", function(event) {
-            Logger.log("tap", event);
+            Logger.log("tap" + event.shiftKey + event);
+            var shiftKey = event.gesture.touches[0].shiftKey;
             var el = event.target;
             if (el.model) {
                 var image = el.model;
-                if (galleryView.isShowSelected()) {
-                    // toggle favorites
-                    var isFavorite = !el.model.get("isFavorite");
-                    image.set("isFavorite", isFavorite);
+                var images = g.get("images");
+                var selectedImageIndex = images.indexOf(image);
+                var imagesToProcess = [];
+                var imagesToClearout = [];
+                /*
+                * Utility slice that works even if from > to, and includes to and from
+                */
+                function inclusiveSlice(array, from, to) {
+                    var min = Math.min(from, to);
+                    var max = Math.max(from, to);
+                    return array.slice(min, max + 1);
+                }
+                if (shiftKey && prevSelectedImageIndexStart != null) {
+                    // only update prevSelectedImageIndex on the first selected item
+                    // as we shift select, we do not update the starting index
+                    imagesToProcess = inclusiveSlice(images, prevSelectedImageIndexStart, selectedImageIndex);
+                    imagesToClearout = inclusiveSlice(images, prevSelectedImageIndexStart, prevSelectedImageIndexEnd);
+                    prevSelectedImageIndexEnd = selectedImageIndex;
                 }
                 else {
-                    var isSelected = !el.model.get("isSelected");
-                    Logger.log("setting is selected");
-                    image.set("isSelected", isSelected);
+                    // toggle the selected image
+                    imagesToProcess.push(image);
+                    prevSelectedImageIndexStart = selectedImageIndex;
+                    prevSelectedImageIndexEnd = selectedImageIndex;
                 }
+                var propertyName = galleryView.isShowSelected()? "isFavorite":  "isSelected";
+                var newPropertyValue = !shiftKey?
+                    !image.get(propertyName) : // alternate
+                    images.at(prevSelectedImageIndexStart).get(propertyName); // copy from selection start
+                imagesToClearout.forEach(function(image) {
+                    image.set(propertyName, !newPropertyValue)
+                });
+                imagesToProcess.forEach(function(image) {
+                    image.set(propertyName, newPropertyValue)
+                });
             }
         });
         
@@ -139,10 +184,9 @@ function initialize(Logger) {
             }
             catch (e) {
                 Logger.log(e);
-                center = {x: undefined, y: undefined};
             }
 //            Logger.log("pinch " + relScale);
-            gv.zoom(relScale, center.x, center.y);
+            gv.zoom(relScale, center);
         });
 
         var lastDragCenter;
@@ -168,11 +212,16 @@ function initialize(Logger) {
                 return;
             
             var gestureCenter = event;
-            var center = getPosition(gestureCenter.pageX, gestureCenter.pageY, event.target);
+            var center;
+            try {
+                center = getPosition(gestureCenter.pageX, gestureCenter.pageY, event.target);
+            } catch (e) {
+                Logger.log("mousewheel out of image", e);
+            }
             var factor = 1 + Math.sqrt(Math.abs(event.deltaY)) / 10;
             if (event.deltaY > 0)
                 factor = 1 / factor;
-            gv.zoom(factor, center.x, center.y);
+            gv.zoom(factor, center);
         });
         
         /**
