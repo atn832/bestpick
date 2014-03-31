@@ -1,4 +1,4 @@
-define(["Logger"], function(Logger) {
+define(["logger"], function(Logger) {
     return {
         onRejected: function(e) {
             Logger.log("Promise failed", e);

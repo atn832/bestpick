@@ -122,7 +122,6 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             this.render();
         },
         render: function() {
-            Logger.log("image.render", this.model.get("url"));
             var image = this.model;
             if (image) {
                 var instance = this;

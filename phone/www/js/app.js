@@ -21,15 +21,17 @@ document.addEventListener("DOMContentLoaded", function(event) {
 
 function initialize(Logger) {
     dirdrop = document.getElementById(dirdropID);
-    dirdrop.addEventListener("change", function(evt) {
-        var dir = dirdrop.value
-        Logger.log(dirdrop.value);
-        requirejs(["filesystem"], function(FileSystem) {
-            var images = FileSystem.getInstance().getDir(dirdrop.value);
-            gallery.get("images").set(images);
-            galleryView.render();
+    if (dirdrop) {
+        dirdrop.addEventListener("change", function(evt) {
+            var dir = dirdrop.value
+            Logger.log(dirdrop.value);
+            requirejs(["filesystem"], function(FileSystem) {
+                var images = FileSystem.getInstance().getDir(dirdrop.value);
+                gallery.get("images").set(images);
+                galleryView.render();
+            });
         });
-    });
+    }
     
     selectBtn = document.getElementById(selectBtnID);
     
@@ -96,10 +98,6 @@ function initialize(Logger) {
         
         var g = new Gallery();
         gallery = g;
-        g.on("all", function(event) {
-            Logger.log(event);
-        });
-//        console.log("g model", g.get("images"));
         var dir = FileSystem.getInstance().getDir();
         g.get("images").add(dir);
         
