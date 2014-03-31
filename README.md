@@ -23,4 +23,4 @@ How to test on Android
 ======================
 1.  Install PhoneGap: http://phonegap.com/install/
 2.  From the folder phone, run `phonegap run android`
-
+If you get the following error "Error: ENOENT, no such file or directory 'platforms/android/assets'", create an empty folder platforms and try again.
