@@ -11,17 +11,15 @@ html, body {
 
 #container {
     border: 0px solid red;
-    background-color: lightgray;
     height: 100%;
 }
 
 nav {
     position: fixed;
     bottom: 0;
-    border: 1px solid black;
-    background-color: gray;
-    height: 2em;
-    border-radius: 5px;
+    left: 0;
+    right: 0;
+    height: 3em;
 }
 
 input {
@@ -40,7 +38,11 @@ input:last-of-type {
 .gallery {
     width: 100%;
     height: 100%;
-    overflow: hidden; /* not sure why this is necessary */
+}
+
+svg {
+    /* Solves the 1px vertical scrollbar issue */
+    position: absolute;
 }
 
 /* Image View style */
@@ -53,13 +55,22 @@ input:last-of-type {
     fill: none;
 }
 
+.hidden {
+    visibility: hidden;
+}
+
+body .gallery .focus {
+    stroke-width: 7;
+}
+
+/* from http://colorschemedesigner.com/#3s32bw0w0w0w0 */
 .gallery .selected {
-    stroke: green;
+    stroke: #086fa1;
     stroke-width: 5;
 }
 
 .gallery .favorite {
-    stroke: red;
+    stroke: #ed002f;
     stroke-width: 5;
 }
 
@@ -67,4 +78,10 @@ input:last-of-type {
     position:fixed;
     top: 0;
     left: 0;
+}
+
+nav input[type="file"] {
+    width: 250px;
+    display: inline;
+    float: right;
 }

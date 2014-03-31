@@ -20,7 +20,7 @@ require(["transformation"], function(Transformation) {
         height: 200
     }
     var fitM = Transformation.getFitMatrix(fullSize, thumbnailSize);
-    console.log(fitM);
+//    console.log(fitM);
     test("getFitMatrix", function() {
         ok(fitM.a === .5);
         ok(fitM.b === 0);
@@ -62,4 +62,104 @@ require(["rectangle"], function(Rectangle) {
         ok(i1.width === 2);
         ok(i1.height === 2);
     });
+});
+
+require(["job", "variablepriorityqueue", "pool"], function(Job, VPQ, Pool) {
+    var timeout = 100;
+    
+    var queues = [new VPQ(), new VPQ(), new VPQ(), new VPQ(), new VPQ()];
+    
+    // receives the result of a pool that runs a queue
+    var result = [];
+    
+    var jobs = [
+        new Job({
+            priority: Job.Priority.Low,
+            f: function(resolve, reject) {
+                setTimeout(function() {
+                    result.push(0);
+                    resolve();
+                }, timeout);
+            }
+        }), new Job({
+            priority: Job.Priority.High,
+            f: function(resolve, reject) {
+                setTimeout(function() {
+                    result.push(1);
+                    resolve();
+                }, timeout);
+            }
+        }), new Job({
+            priority: Job.Priority.Low,
+            f: function(resolve, reject) {
+                setTimeout(function() {
+                    result.push(2);
+                    resolve();
+                }, timeout);
+            }
+        }), new Job({
+            priority: Job.Priority.High,
+            f: function(resolve, reject) {
+                setTimeout(function() {
+                    result.push(3);
+                    resolve();
+                }, timeout);
+            }
+        })
+    ];
+    queues.forEach(function(queue) {
+        jobs.forEach(function(job) {
+            queue.enqueue(job);
+        });
+    });
+    
+    function getDequeueSequence(queue, jobs) {
+        var indexes = [];
+        while (!queue.isEmpty()) {
+            var job = queue.dequeue();
+            indexes.push(jobs.indexOf(job));
+        }
+        return indexes;
+    }
+    // expected order: 1, 3, 0, 2
+    test("queue0", function() {
+        deepEqual(getDequeueSequence(queues[0], jobs), [1, 3, 0, 2]);
+    });
+    
+    jobs[1].set("priority", Job.Priority.Low);
+    // expected order: 3, 0, 2, 1
+    test("queue1", function() {
+        deepEqual(getDequeueSequence(queues[1], jobs), [3, 0, 2, 1]);
+    });
+    
+    jobs[2].set("priority", Job.Priority.High);
+    // expected order: 3, 2, 0, 1
+    test("queue2", function() {
+        deepEqual(getDequeueSequence(queues[2], jobs), [3, 2, 0, 1]);
+    });
+    
+    test("queue3", function() {
+        queues[3].dequeue();
+        queues[3].dequeue();
+        jobs[1].set("priority", Job.Priority.High);
+        deepEqual(getDequeueSequence(queues[3], jobs), [1, 0]);
+    });
+    
+    var pool = new Pool();
+    pool.process(queues[4]);
+    setTimeout(function() {
+        test("pool", function() {
+            deepEqual(result, [3, 2, 1, 0]);
+        });
+        repopulatePool();
+    }, timeout * (jobs.length + 1));
+    
+    function repopulatePool() {
+        queues[4].enqueue(jobs[0]);
+        setTimeout(function() {
+            test("pool, added on the fly", function() {
+                deepEqual(result, [3, 2, 1, 0, 0]);
+            });
+        }, timeout * 2);
+    }
 });
