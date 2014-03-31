@@ -1,7 +1,7 @@
 /**
 * Implementation of an ImageView. It displays an Image whose url is assumed to be static (for simplicity)
 **/
-define(["logger", "util", "promise", "filesystem", "transformation", "rectangle", "svg", "backbone"], function(Logger, Util, Promise, FileSystem, Transformation, Rectangle, SVG) {
+define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "transformation", "rectangle", "svg", "backbone"], function(Logger, Util, Promise, ImageProcessor, Job, FileSystem, Transformation, Rectangle, SVG) {
     var fullResolutionGenerationTimeout = 500;
     var thumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
     
@@ -74,21 +74,48 @@ define(["logger", "util", "promise", "filesystem", "transformation", "rectangle"
             
             this.width = 0;
             this.height = 0;
-            this.fullImageSizePromise = this.getFullImagePromise().then(function(fullImage) {
-                Logger.log("fullsize promise");
-                return {
-                    width: fullImage.width,
-                    height: fullImage.height
-                };
-            }, Util.onRejected);
+            
+            var instance = this;
+            this.fullImageSizePromise = new Promise(function(resolveMain, reject) {
+                Logger.log("enqueuing job: full size request");
+                function getFullImageSize(resolve, reject) {
+                    instance.getFullImagePromise().then(function(fullImage) {
+                        Logger.log("fullsize promise");
+                        resolveMain({
+                            width: fullImage.width,
+                            height: fullImage.height
+                        });
+                        resolve();
+                    }, Util.onRejected);
+                }
+                try {
+                    ImageProcessor.getInstance().getQueue().enqueue(new Job({
+                        priority: Job.Priority.High,
+                        f: getFullImageSize
+                    }));
+                }
+                catch(e) {
+                    Logger.log("exception enqueuing full size request", e);
+                }
+            });
             
             // Set up fixed resolution image
             // we don't need the result.
             // just make sure the next thumbnail generation is done after the previous one is done
-            this.getFullImagePromise().then(function(fullImage) {
-                var thumbnailURI = resizeImage(fullImage, thumbnailPixelSize, thumbnailPixelSize);
-                this.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
-            }.bind(this));
+            function setImageThumbnail(resolve, reject) {
+                Logger.log("setting image thumbnail");
+                instance.getFullImagePromise().then(function(fullImage) {
+                    Logger.log("resizing image for thumbnail");
+                    var thumbnailURI = resizeImage(fullImage, thumbnailPixelSize, thumbnailPixelSize);
+                    instance.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
+                    resolve();
+                });
+            }
+            Logger.log("enqueuing job: set thumbnail");
+            ImageProcessor.getInstance().getQueue().enqueue(new Job({
+                priority: Job.Priority.High,
+                f: setImageThumbnail
+            }));
             
             this.setVisible(true);
             
@@ -109,11 +136,11 @@ define(["logger", "util", "promise", "filesystem", "transformation", "rectangle"
                     className += "favorite ";
                 
                 if (!this.isVisible()) {
-                    Logger.log("hidden");
+//                    Logger.log("hidden");
                     this.el.setAttribute("class", "hidden");
                 }
                 else {
-                    Logger.log("visible");
+//                    Logger.log("visible");
                     this.el.setAttribute("class", "");
                 }
                 //Logger.log("classname:" + className);
@@ -201,41 +228,47 @@ define(["logger", "util", "promise", "filesystem", "transformation", "rectangle"
                         m = SVG.SVGSVGElement.createSVGMatrix();
 
                     // no skewing, no rotation
-                    Promise.all([this.getFullImagePromise(), this.getFullSizePromise()]).then(function(results) {
-                        var fullImage = results[0];
-                        var fullSize = results[1];
-                        var fit = Transformation.getFitMatrix(fullSize, this.getSize());
-                        var modelToDevice = m.multiply(fit);
+                    var instance = this;
+                    function generateSubtile(resolve, reject) {
+                        Promise.all([instance.getFullImagePromise(), instance.getFullSizePromise()]).then(function(results) {
+                            var fullImage = results[0];
+                            var fullSize = results[1];
+                            var fit = Transformation.getFitMatrix(fullSize, instance.getSize());
+                            var modelToDevice = m.multiply(fit);
 
-                        var thumbnailURI = getSubImage(fullImage, this.getSize(), modelToDevice);
-                        this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
-                    }.bind(this));
+                            var thumbnailURI = getSubImage(fullImage, instance.getSize(), modelToDevice);
+                            instance.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
+                            resolve();
+                        });
+                    }
+                    Logger.log("enqueuing job: generate subtile");
+                    ImageProcessor.getInstance().getQueue().enqueue(new Job({
+                        priority: Job.Priority.High,
+                        f: generateSubtile
+                    }));
+
                 }.bind(this), fullResolutionGenerationTimeout);
         },
         getFullImagePromise: function() {
-//            if (!this.fullImagePromise) {
-//                this.fullImagePromise = new Promise(function(resolve) {
-                return new Promise(function(resolve) {
-                    try {
-                        var image = this.model;
-                        var fullImage = document.createElement("img");
-                        fullImage.onload = function() {
-                            resolve(fullImage);
-                        };
-                        var url = image.get("url");
-                        Logger.log("setting fullimage on img", url);
-                        var uri = FileSystem.getInstance().getDataURI(url);
-                        uri.then(function(uri) {
-                            Logger.log("setting fullimage", url);
-                            fullImage.src = uri;
-                        });
-                    }
-                    catch (e) {
-                        Logger.log(e);
-                    }
-                }.bind(this));
-//            }
-//            return this.fullImagePromise;
+            return new Promise(function(resolve) {
+                try {
+                    var image = this.model;
+                    var fullImage = document.createElement("img");
+                    fullImage.onload = function() {
+                        resolve(fullImage);
+                    };
+                    var url = image.get("url");
+                    Logger.log("setting fullimage on img", url);
+                    var uri = FileSystem.getInstance().getDataURI(url);
+                    uri.then(function(uri) {
+                        Logger.log("setting fullimage", url);
+                        fullImage.src = uri;
+                    });
+                }
+                catch (e) {
+                    Logger.log(e);
+                }
+            }.bind(this));
         },
         setVisible: function(isVisible) {
             if (this.visible === isVisible)

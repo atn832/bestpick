@@ -2,6 +2,7 @@ define(["pool", "variablepriorityqueue"], function(Pool, VariablePriorityQueue) 
     function ImageProcessor() {
         this.queue = new VariablePriorityQueue();
         this.pool = new Pool();
+        this.pool.process(this.queue);
     }
     
     ImageProcessor.prototype.getQueue = function() {

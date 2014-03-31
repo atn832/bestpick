@@ -1,4 +1,4 @@
-define(["logger"], function(Logger) {
+define(["logger", "promise"], function(Logger, Promise) {
     function Pool() {
     };
     
@@ -37,8 +37,9 @@ define(["logger"], function(Logger) {
         
         // dequeue only when the only promise handled finishes
         queue.on("enqueue", function(event) {
-            if (!isRunning)
+            if (!isRunning) {
                 startRun();
+            }
         });
     }
     
