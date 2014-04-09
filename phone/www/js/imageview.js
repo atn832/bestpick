@@ -1,7 +1,7 @@
 /**
 * Implementation of an ImageView. It displays an Image whose url is assumed to be static (for simplicity)
 **/
-define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "transformation", "rectangle", "svg", "backbone"], function(Logger, Util, Promise, ImageProcessor, Job, FileSystem, Transformation, Rectangle, SVG) {
+define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "transformation", "rectangle", "svg", "imagemetadata", "backbone"], function(Logger, Util, Promise, ImageProcessor, Job, FileSystem, Transformation, Rectangle, SVG, ImageMetadata) {
     var fullResolutionGenerationTimeout = 500;
     var thumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
     
@@ -76,47 +76,42 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             this.height = 0;
             
             var instance = this;
-            this.fullImageSizePromise = new Promise(function(resolveMain, reject) {
-                Logger.log("enqueuing job: full size request");
-                function getFullImageSize(resolve, reject) {
+            this.metadataPromise = new Promise(function(resolveMain, reject) {
+                Logger.log("enqueuing job: metadata request");
+                function getMetadata(resolve, reject) {
                     instance.getFullImagePromise().then(function(fullImage) {
-                        Logger.log("fullsize promise");
-                        resolveMain({
+                        Logger.log("metadata promise");
+                        var metadata = new ImageMetadata();
+                        metadata.set(ImageMetadata.Keys.FullSize, {
                             width: fullImage.width,
                             height: fullImage.height
                         });
+                        var thumbnailURI = resizeImage(fullImage, thumbnailPixelSize, thumbnailPixelSize);
+                        metadata.set(ImageMetadata.Keys.ThumbnailURI, thumbnailURI);
+                        resolveMain(metadata);
                         resolve();
                     }, Util.onRejected);
                 }
                 try {
                     ImageProcessor.getInstance().getQueue().enqueue(new Job({
                         priority: Job.Priority.High,
-                        f: getFullImageSize
+                        f: getMetadata
                     }));
                 }
                 catch(e) {
-                    Logger.log("exception enqueuing full size request", e);
+                    Logger.log("exception enqueuing metadata request", e);
                 }
             });
             
             // Set up fixed resolution image
             // we don't need the result.
             // just make sure the next thumbnail generation is done after the previous one is done
-            function setImageThumbnail(resolve, reject) {
-                Logger.log("setting image thumbnail");
-                instance.getFullImagePromise().then(function(fullImage) {
-                    Logger.log("resizing image for thumbnail");
-                    var thumbnailURI = resizeImage(fullImage, thumbnailPixelSize, thumbnailPixelSize);
-                    instance.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
-                    resolve();
-                });
-            }
-            Logger.log("enqueuing job: set thumbnail");
-            ImageProcessor.getInstance().getQueue().enqueue(new Job({
-                priority: Job.Priority.High,
-                f: setImageThumbnail
-            }));
-            
+            this.metadataPromise.then(function(metadata) {
+                Logger.log("metadatapromise done, ready for thumbnail");
+                var thumbnailURI = metadata.get(ImageMetadata.Keys.ThumbnailURI);
+                instance.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
+            });
+
             this.setVisible(true);
             
             this.render();
@@ -153,7 +148,9 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
         * Returns a promise for the size of the full resolution image
         **/
         getFullSizePromise: function() {
-            return this.fullImageSizePromise;
+            return this.metadataPromise.then(function(metadata) {
+                return metadata.get(ImageMetadata.Keys.FullSize);
+            });
         },
         /**
         * Returns the tile size
