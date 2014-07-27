@@ -67,7 +67,7 @@ require(["rectangle"], function(Rectangle) {
 require(["job", "variablepriorityqueue", "pool"], function(Job, VPQ, Pool) {
     var timeout = 100;
     
-    var queues = [new VPQ(), new VPQ(), new VPQ(), new VPQ(), new VPQ()];
+    var queues = [new VPQ(), new VPQ(), new VPQ(), new VPQ(), new VPQ(), new VPQ(), new VPQ()];
     
     // receives the result of a pool that runs a queue
     var result = [];
@@ -114,6 +114,10 @@ require(["job", "variablepriorityqueue", "pool"], function(Job, VPQ, Pool) {
     });
     
     function getDequeueSequence(queue, jobs) {
+        if (queue.hasBeenSequenced) {
+            throw "Has already been sequenced";
+        }
+        queue.hasBeenSequenced = true;
         var indexes = [];
         while (!queue.isEmpty()) {
             var job = queue.dequeue();
@@ -162,4 +166,18 @@ require(["job", "variablepriorityqueue", "pool"], function(Job, VPQ, Pool) {
             });
         }, timeout * 2);
     }
+    
+    test("queue5, remove", function() {
+        // queue before removal
+        // [3, 2, 1, 0];
+        queues[5].remove(jobs[1]);
+        deepEqual(getDequeueSequence(queues[5], jobs), [3, 2, 0]);
+    });
+    test("queue6, remove", function() {
+        // queue before removal
+        // [3, 2, 1, 0];
+        queues[6].remove(jobs[1]);
+        queues[6].remove(jobs[3]);
+        deepEqual(getDequeueSequence(queues[6], jobs), [2, 0]);
+    });
 });

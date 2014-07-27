@@ -208,7 +208,10 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
         requestThumbnailUpdate: function() {
             if (this.timer)
                 clearTimeout(this.timer);
-
+            if (this.currentJob) {
+                ImageProcessor.getInstance().getQueue().remove(this.currentJob);
+                this.currentJob = null;
+            }
             // clear full resolution image (using a small transparent image)
             this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw== ");
 
@@ -225,6 +228,10 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
 
                     // no skewing, no rotation
                     var instance = this;
+                    var newJob = new Job({
+                        priority: Job.Priority.High,
+                        f: generateSubtile
+                    });
                     function generateSubtile(resolve, reject) {
                         Promise.all([instance.getFullImagePromise(), instance.getFullSizePromise()]).then(function(results) {
                             var fullImage = results[0];
@@ -233,15 +240,18 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                             var modelToDevice = m.multiply(fit);
 
                             var thumbnailURI = getSubImage(fullImage, instance.getSize(), modelToDevice);
-                            instance.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
+                            // only update the image if no new job has taken over this one
+                            if (instance.currentJob === newJob) {
+                                instance.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
+                                instance.currentJob = null;
+                            }
                             resolve();
                         });
                     }
+                    newJob.set("f", generateSubtile);
                     Logger.log("enqueuing job: generate subtile");
-                    ImageProcessor.getInstance().getQueue().enqueue(new Job({
-                        priority: Job.Priority.High,
-                        f: generateSubtile
-                    }));
+                    this.currentJob = newJob;
+                    ImageProcessor.getInstance().getQueue().enqueue(this.currentJob);
 
                 }.bind(this), fullResolutionGenerationTimeout);
         },
