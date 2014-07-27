@@ -3,3 +3,4 @@
 /phone/www/node_modules/*
 /node_modules/*
 /webkitbuilds/*
+phone/npm-debug.log
