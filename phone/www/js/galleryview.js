@@ -33,6 +33,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         setVisible: function(isVisible) {
             this.visible = isVisible;
             this.render();
+            this.trigger("change:isVisible");
         },
         isVisible: function() {
             return this.visible;
@@ -281,13 +282,17 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
     
     function getImageView(image) {
         var cid = image.cid;
+        var imageView;
         if (!(cid in this.imageViews)) {
             // make the image element
-            this.imageViews[image.cid] = new ImageView({
+            imageView = new ImageView({
                 model: image
             });
+            this.imageViews[image.cid] = imageView;
         }
-        return this.imageViews[cid];
+        imageView = this.imageViews[cid];
+        imageView.setThumbnailUpdateEnabled(this.isShowSelected());
+        return imageView;
     }
     
     function getGridSize(gallerySize, imageSizes) {

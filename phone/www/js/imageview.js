@@ -144,6 +144,12 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                 }
             }
         },
+        setThumbnailUpdateEnabled: function(enabled) {
+            this.thumbnailUpdateEnabled = enabled;
+        },
+        isThumbnailUpdateEnabled: function() {
+            return this.thumbnailUpdateEnabled;
+        },
         /**
         * Returns a promise for the size of the full resolution image
         **/
@@ -206,6 +212,9 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             return this.tileBorder.getBoundingClientRect();
         },
         requestThumbnailUpdate: function() {
+            if (!this.isThumbnailUpdateEnabled()) {
+                return;
+            }
             if (this.timer)
                 clearTimeout(this.timer);
             if (this.currentJob) {

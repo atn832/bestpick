@@ -210,7 +210,7 @@ function initialize(Logger) {
             var newCenter = event.gesture.center;
             var dx = newCenter.pageX - lastDragCenter.pageX;
             var dy = newCenter.pageY - lastDragCenter.pageY;
-            gv.translate(dx, dy);
+            cgv.translate(dx, dy);
             Logger.log("drag " + dx + " " + dy);
             lastDragCenter = newCenter;
         });
@@ -249,16 +249,18 @@ function initialize(Logger) {
         
         // listener to selected images
         g.on("add:selectedImages remove:selectedImages reset:selectedImages", function() {
-            updateSelectButtonState(g, gv);
+            updateSelectButtonState();
         });
         g.on("add:favoriteImages remove:favoriteImages reset:favoriteImages", function() {
             updateKeepButtonState(g);
         });
-        gv.on("change:showSelected", function() {
-            updateSelectButtonState(g, gv);
+        function updateBothButtons() {
+            updateSelectButtonState();
             updateKeepButtonState(g);
-        });
-        updateSelectButtonState(g, gv);
+        }
+        gv.on("change:isVisible", updateBothButtons);
+        cgv.on("change:isVisible", updateBothButtons);
+        updateSelectButtonState();
         updateKeepButtonState(g);
         
 //        hardCodedTest();
