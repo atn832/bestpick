@@ -21,8 +21,7 @@ define(["logger", "job", "backbone"], function(Logger, Job, Backbone) {
         */
         dequeue: function() {
             Logger.log("dequeue job");
-            var bucket = this.buckets[Job.Priority.High].length > 0?
-                this.buckets[Job.Priority.High]: this.buckets[Job.Priority.Low];
+            var bucket = this.getMostImportantNonEmptyBucket();
             if (bucket.length === 0)
                 return null;
             var job = bucket.shift();
@@ -55,8 +54,22 @@ define(["logger", "job", "backbone"], function(Logger, Job, Backbone) {
             return size;
         },
         isEmpty: function() {
-            return this.buckets[Job.Priority.High].length + this.buckets[Job.Priority.Low].length === 0;
-        }
+            return this.getSize() === 0;
+        },
+        getMostImportantNonEmptyBucket: function() {
+            var descendingPriorityValues = [];
+            for (var priority in Job.Priority)
+                descendingPriorityValues.push(Job.Priority[priority]);
+            descendingPriorityValues.sort(function(a, b) { return b - a; });
+            for (var i = 0; i < descendingPriorityValues.length; i++) {
+                var priorityValue = descendingPriorityValues[i];
+                var bucket = this.buckets[priorityValue];
+                if (bucket.length)
+                    return bucket;
+            }
+            return null;
+        },
+
     });
     
     function jobBucketUpdate(job, newPriority) {

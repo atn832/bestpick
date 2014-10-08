@@ -101,9 +101,6 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         // iterate over images
         var showSelected = this.isShowSelected();
         var allGalleryImages = this.getAllGalleryImages();
-        if (this.id > 0) {
-            debugger;
-        }
         var imagesToDisplay = showSelected?
             this.getSelectedGalleryImages() : allGalleryImages;
         console.log(imagesToDisplay.length, " to display", this.id);
@@ -295,15 +292,13 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         if (!(cid in this.imageViews)) {
             // make the image element
             console.log(this.id, "new image");
-            if (this.id > 0)
-                debugger;
             imageView = new ImageView({
-                model: image
+                model: image,
+                attributes: { thumbnailUpdateEnabled: this.isShowSelected() }
             });
             this.imageViews[image.cid] = imageView;
         }
         imageView = this.imageViews[cid];
-        imageView.setThumbnailUpdateEnabled(this.isShowSelected());
         return imageView;
     }
     

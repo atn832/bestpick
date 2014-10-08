@@ -16,6 +16,10 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                 this.render();
             }.bind(this));
             
+            if (this.attributes && this.attributes.thumbnailUpdateEnabled) {
+                this.setThumbnailUpdateEnabled(true);
+            }
+
             /*
                 the DOM will look like this:
                 <g transform="translate(...)">
@@ -95,7 +99,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                 }
                 try {
                     ImageProcessor.getInstance().getQueue().enqueue(new Job({
-                        priority: Job.Priority.High,
+                        priority: Job.Priority.High + (instance.isThumbnailUpdateEnabled()? 2: 0),
                         f: getMetadata
                     }));
                 }
@@ -239,7 +243,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                     // no skewing, no rotation
                     var instance = this;
                     var newJob = new Job({
-                        priority: Job.Priority.High,
+                        priority: Job.Priority.Low + (this.isThumbnailUpdateEnabled()? 2: 0),
                         f: generateSubtile
                     });
                     function generateSubtile(resolve, reject) {
