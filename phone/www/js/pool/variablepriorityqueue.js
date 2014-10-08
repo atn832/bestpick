@@ -9,7 +9,7 @@ define(["logger", "job", "backbone"], function(Logger, Job, Backbone) {
             this.jobChangeListener = jobBucketUpdate.bind(this);
         },
         enqueue: function(job) {
-            Logger.log("enqueue job");
+            Logger.log("enqueue job", job.get("priority"));
             job.on("change:priority", this.jobChangeListener);
             var bucket = this.buckets[job.get("priority")];
             bucket.push(job);

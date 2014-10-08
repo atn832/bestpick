@@ -113,9 +113,10 @@ function initialize(Logger) {
         galleryView = gv;
         var cgv = new GalleryView({
             model: g,
-            container: container
+            container: container,
+            // have to set it at initialization, or it will load all images
+            attributes: {showSelected: true}
         });
-        cgv.setShowSelected(true);
         cgv.setVisible(false);
         compareGalleryView = cgv;
         

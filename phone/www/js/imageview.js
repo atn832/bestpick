@@ -4,11 +4,12 @@
 define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "transformation", "rectangle", "svg", "imagemetadata", "backbone"], function(Logger, Util, Promise, ImageProcessor, Job, FileSystem, Transformation, Rectangle, SVG, ImageMetadata) {
     var fullResolutionGenerationTimeout = 500;
     var thumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
-    
+    var id = 0;
     var ImageView = Backbone.View.extend({
         tagName: "span",
         className: "galleryImage",
         initialize: function() {
+            this.id = id++;
 //            this.listenTo(this.model, "change", this.render);
             this.model.on("all", function(event) {
 //                Logger.log("iv model changed", event);
@@ -242,6 +243,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                         f: generateSubtile
                     });
                     function generateSubtile(resolve, reject) {
+                        console.log("generate subtile");
                         Promise.all([instance.getFullImagePromise(), instance.getFullSizePromise()]).then(function(results) {
                             var fullImage = results[0];
                             var fullSize = results[1];
@@ -273,7 +275,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                         resolve(fullImage);
                     };
                     var url = image.get("url");
-                    Logger.log("setting fullimage on img", url);
+                    Logger.log(this.id, "setting fullimage on img", url);
                     var uri = FileSystem.getInstance().getDataURI(url);
                     uri.then(function(uri) {
                         Logger.log("setting fullimage", url);
