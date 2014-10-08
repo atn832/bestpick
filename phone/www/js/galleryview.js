@@ -12,13 +12,14 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
 //                this.render();
 //            }.bind(this));
             this.imageViews = {};
+            this.visible = true;
             
             this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             this.svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
             this.svg.setAttribute("version", "1.1");
             
             this.el.appendChild(this.svg);
-            
+
             var instance = this;
             window.addEventListener("resize", function() {
                 window.requestAnimationFrame(render.bind(instance));
@@ -29,6 +30,13 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             }
         },
         render: render,
+        setVisible: function(isVisible) {
+            this.visible = isVisible;
+            this.render();
+        },
+        isVisible: function() {
+            return this.visible;
+        },
         setShowSelected: function(b) {
             Logger.log("gv setShowSelected", b);
             this.showSelected = b;
@@ -78,6 +86,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
     function render() {
         Logger.log("gallery view render");
         var el = this.el;
+        el.classList.toggle("D-n", !this.visible);
         
         this.svg.setAttribute("width", "100%");
         

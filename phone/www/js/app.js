@@ -13,6 +13,7 @@ var dirdrop;
 
 var gallery;
 var galleryView;
+var compareGalleryView;
 
 document.addEventListener("DOMContentLoaded", function(event) {
     console.log("DOM fully loaded and parsed");
@@ -36,8 +37,9 @@ function initialize(Logger) {
     selectBtn = document.getElementById(selectBtnID);
     
     selectBtn.addEventListener("click", function() {
-        var showSelected = !galleryView.isShowSelected();
-        galleryView.setShowSelected(showSelected);
+        var showSelected = !compareGalleryView.isVisible();
+        galleryView.setVisible(!showSelected);
+        compareGalleryView.setVisible(showSelected);
         if (!showSelected) {
             // view all
             // reset favorites
@@ -73,6 +75,8 @@ function initialize(Logger) {
         
         // view all again
         galleryView.setShowSelected(false);
+        galleryView.setVisible(true);
+        compareGalleryView.setVisible(false);
     });
     
     requirejs(["filesystem", "gallery", "galleryview", "image", "logger", "jquery.mousewheel"], function(FileSystem, Gallery, GalleryView, Image, Logger, m) {
@@ -87,10 +91,10 @@ function initialize(Logger) {
         zoomOutBtn = document.getElementById(zoomOutBtnID);
         var ratio = 1.1;
         zoomInBtn.addEventListener("click", function() {
-            galleryView.zoom(ratio);
+            compareGalleryView.zoom(ratio);
         });
         zoomOutBtn.addEventListener("click", function() {
-            galleryView.zoom(1/ratio);
+            compareGalleryView.zoom(1/ratio);
         });
 
         Logger.log("initializing gallery");
@@ -107,8 +111,16 @@ function initialize(Logger) {
             container: container
         });
         galleryView = gv;
+        var cgv = new GalleryView({
+            model: g,
+            container: container
+        });
+        cgv.setShowSelected(true);
+        cgv.setVisible(false);
+        compareGalleryView = cgv;
         
         container.appendChild(gv.el);
+        container.appendChild(cgv.el);
         // todo: make gv listen to events so it can rerender
         // itself when added to a new parent
         gv.render();
@@ -117,7 +129,8 @@ function initialize(Logger) {
         var prevSelectedImageIndexEnd;
         // put listeners on to images:
         // if touch on it, toggle
-        Hammer(gv.el, {prevent_default: true}).on("tap", function(event) {
+        
+        function handleTap(event) {
             Logger.log("tap" + event.shiftKey + event);
             var shiftKey = event.gesture.touches[0].shiftKey;
             var el = event.target;
@@ -148,7 +161,7 @@ function initialize(Logger) {
                     prevSelectedImageIndexStart = selectedImageIndex;
                     prevSelectedImageIndexEnd = selectedImageIndex;
                 }
-                var propertyName = galleryView.isShowSelected()? "isFavorite":  "isSelected";
+                var propertyName = compareGalleryView.isVisible()? "isFavorite":  "isSelected";
                 var newPropertyValue = !shiftKey?
                     !image.get(propertyName) : // alternate
                     images.at(prevSelectedImageIndexStart).get(propertyName); // copy from selection start
@@ -159,21 +172,19 @@ function initialize(Logger) {
                     image.set(propertyName, newPropertyValue)
                 });
             }
-        });
-        
+        }
+        Hammer(gv.el, {prevent_default: true}).on("tap", handleTap);
+        Hammer(cgv.el, {prevent_default: true}).on("tap", handleTap);
         
         var lastPinchScale;
         
-        Hammer(gv.el, {prevent_default:true}).on("transformstart", function(event) {
+        Hammer(cgv.el, {prevent_default:true}).on("transformstart", function(event) {
             lastPinchScale = event.gesture.scale;
         });
         
-        Hammer(gv.el, {prevent_default:true}).on("pinch", function(event) {
+        Hammer(cgv.el, {prevent_default:true}).on("pinch", function(event) {
             var newScale = event.gesture.scale;
             Logger.log("pinch " + newScale);
-            
-            if (!gv.isShowSelected())
-                return;
             
             var relScale = newScale / lastPinchScale;
             lastPinchScale = newScale;
@@ -186,19 +197,16 @@ function initialize(Logger) {
                 Logger.log(e);
             }
 //            Logger.log("pinch " + relScale);
-            gv.zoom(relScale, center);
+            cgv.zoom(relScale, center);
         });
 
         var lastDragCenter;
         
-        Hammer(gv.el, {prevent_default:true}).on("dragstart", function(event) {
+        Hammer(cgv.el, {prevent_default:true}).on("dragstart", function(event) {
             lastDragCenter = event.gesture.center;
         });
         
-        Hammer(gv.el, {prevent_default:true}).on("drag", function(event) {
-            if (!gv.isShowSelected())
-                return;
-            
+        Hammer(cgv.el, {prevent_default:true}).on("drag", function(event) {
             var newCenter = event.gesture.center;
             var dx = newCenter.pageX - lastDragCenter.pageX;
             var dy = newCenter.pageY - lastDragCenter.pageY;
@@ -207,10 +215,7 @@ function initialize(Logger) {
             lastDragCenter = newCenter;
         });
         
-        $(gv.el).on('mousewheel', function(event) {
-            if (!gv.isShowSelected())
-                return;
-            
+        $(cgv.el).on('mousewheel', function(event) {
             var gestureCenter = event;
             var center;
             try {
@@ -221,7 +226,7 @@ function initialize(Logger) {
             var factor = 1 + Math.sqrt(Math.abs(event.deltaY)) / 10;
             if (event.deltaY > 0)
                 factor = 1 / factor;
-            gv.zoom(factor, center);
+            cgv.zoom(factor, center);
         });
         
         /**
@@ -271,7 +276,7 @@ function hardCodedTest() {
 function updateSelectButtonState() {
     var selectedImages = gallery.get("selectedImages");
     selectBtn.disabled = selectedImages.length == 0;
-    var showSelected = galleryView.isShowSelected();
+    var showSelected = compareGalleryView.isVisible();
     selectBtn.value = showSelected? "View All": "Select";
     
     zoomInBtn.disabled = !showSelected;
