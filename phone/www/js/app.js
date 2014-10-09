@@ -287,7 +287,6 @@ function getPage() {
 }
 
 function updateButtons() {
-    debugger;
     var page = getPage();
 
     setVisible(compareBtn, page === 0);
@@ -314,6 +313,5 @@ function resetFlag(collection, flagname) {
 }
 
 function setVisible(element, visible) {
-    console.log("setvisible", visible);
     element.classList.toggle("d-n", !visible);
 }
