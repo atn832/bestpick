@@ -30,8 +30,23 @@
 .pos-r {
 	position: relative;
 }
+.start-0 {
+    left: 0;
+}
+.end-0 {
+    right: 0;
+}
+.t-0 {
+    top: 0;
+}
+.b-0 {
+    bottom: 0;
+}
 .bgc-dg {
 	background-color: #555;
+}
+.bgc-g {
+    background-color: #aaa;
 }
 .m-0 {
 	margin: 0;
@@ -41,4 +56,22 @@
 }
 body .d-n { /* override bootstrap */
     display: none;
+}
+.v-h {
+    visibility: hidden;
+}
+.ta-c {
+    text-align: center;
+}
+.va-c {
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+.mstart-30 {
+    margin-left: 30px;
+}
+.op-0 {
+    opacity: 0;
 }

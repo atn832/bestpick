@@ -71,7 +71,5 @@ body .gallery .focus {
 }
 
 nav input[type="file"] {
-    width: 250px;
     display: inline;
-    float: right;
 }
