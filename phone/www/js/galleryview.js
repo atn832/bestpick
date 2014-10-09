@@ -94,7 +94,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
     function render() {
         Logger.log("gallery view render");
         var el = this.el;
-        el.classList.toggle("D-n", !this.visible);
+        el.classList.toggle("d-n", !this.visible);
         
         this.svg.setAttribute("width", "100%");
         

@@ -1,11 +1,13 @@
 var containerID = "container";
-var selectBtnID = "btnSelect";
+var compareBtnID = "btnCompare";
+var backBtnID = "btnBack";
 var keepBtnID = "btnKeep";
 var logsBtnID = "btnLogs";
 var zoomInBtnID = "btnZoomIn";
 var zoomOutBtnID = "btnZoomOut";
 var dirdropID = "dirdrop";
-var selectBtn;
+var compareBtn;
+var backBtn;
 var keepBtn;
 var zoomInBtn;
 var zoomOutBtn;
@@ -34,18 +36,20 @@ function initialize(Logger) {
         });
     }
     
-    selectBtn = document.getElementById(selectBtnID);
+    compareBtn = document.getElementById(compareBtnID);
     
-    selectBtn.addEventListener("click", function() {
-        var showSelected = !compareGalleryView.isVisible();
-        galleryView.setVisible(!showSelected);
-        compareGalleryView.setVisible(showSelected);
-        if (!showSelected) {
-            // view all
-            // reset favorites
-            resetFlag(gallery.get("selectedImages"), "isSelected");
-            resetFlag(gallery.get("favoriteImages"), "isFavorite");
-        }
+    compareBtn.addEventListener("click", function() {
+        showPage(1);
+    });
+    
+    backBtn = document.getElementById(backBtnID);
+    
+    backBtn.addEventListener("click", function() {
+        // reset favorites
+        resetFlag(gallery.get("selectedImages"), "isSelected");
+        resetFlag(gallery.get("favoriteImages"), "isFavorite");
+        // view all
+        showPage(0);
     });
     
     keepBtn = document.getElementById(keepBtnID);
@@ -250,19 +254,12 @@ function initialize(Logger) {
         
         // listener to selected images
         g.on("add:selectedImages remove:selectedImages reset:selectedImages", function() {
-            updateSelectButtonState();
+            updateButtons();
         });
         g.on("add:favoriteImages remove:favoriteImages reset:favoriteImages", function() {
-            updateKeepButtonState(g);
+            updateButtons();
         });
-        function updateBothButtons() {
-            updateSelectButtonState();
-            updateKeepButtonState(g);
-        }
-        gv.on("change:isVisible", updateBothButtons);
-        cgv.on("change:isVisible", updateBothButtons);
-        updateSelectButtonState();
-        updateKeepButtonState(g);
+        updateButtons();
         
 //        hardCodedTest();
     });
@@ -276,27 +273,47 @@ function hardCodedTest() {
     
 }
 
-function updateSelectButtonState() {
-    var selectedImages = gallery.get("selectedImages");
-    selectBtn.disabled = selectedImages.length == 0;
-    var showSelected = compareGalleryView.isVisible();
-    selectBtn.value = showSelected? "View All": "Select";
-    
-    zoomInBtn.disabled = !showSelected;
-    zoomOutBtn.disabled = !showSelected;
+/*
+    page = 0 or 1
+*/
+function showPage(page) {
+    var showSelected = page === 1;
+    galleryView.setVisible(!showSelected);
+    compareGalleryView.setVisible(showSelected);
+    updateButtons();
+}
+function getPage() {
+    return galleryView.isVisible()? 0: 1;
 }
 
-function updateKeepButtonState(gallery) {
-//    console.log("updateKeepButtonState");
-    var favoriteImages = gallery.get("favoriteImages");
-    var keepBtnEnabled = favoriteImages.length > 0;
-    var keepBtnDisabled = !keepBtnEnabled;
-    keepBtn.disabled = keepBtnDisabled;
+function updateButtons() {
+    debugger;
+    var page = getPage();
+
+    setVisible(compareBtn, page === 0);
+    setVisible(backBtn, page === 1);
+    setVisible(keepBtn, page === 1);
+    setVisible(zoomInBtn, page === 1);
+    setVisible(zoomOutBtn, page === 1);
+
+    if (page === 0) {
+        var selectedImages = gallery.get("selectedImages");
+        compareBtn.disabled = selectedImages.length == 0;
+    }
+    else {
+        var favoriteImages = gallery.get("favoriteImages");
+        keepBtn.disabled = favoriteImages.length === 0;
+    }
 }
-                                                 
+
 function resetFlag(collection, flagname) {
     var items = collection.slice();
     items.forEach(function(item) {
         item.set(flagname, false);
     });
+}
+
+function setVisible(element, visible) {
+    console.log("setvisible", visible);
+    element.classList.toggle("d-n", !visible);
 }
