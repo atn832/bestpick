@@ -42,6 +42,7 @@ define(["logger", "image", "promise"], function(Logger, Image, Promise) {
     }
     
     DesktopFileSystem.isValid = function() {
+        return false;
         return fs != undefined;
     }
     
