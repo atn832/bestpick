@@ -18,7 +18,8 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             this.svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
             this.svg.setAttribute("version", "1.1");
-            
+            this.svg.classList.add("h-100");
+            this.svg.classList.add("w-100");
             this.el.appendChild(this.svg);
             if (this.attributes && this.attributes.showSelected) {
                 this.setShowSelected(true);

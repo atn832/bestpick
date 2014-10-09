@@ -36,6 +36,9 @@
 .m-0 {
 	margin: 0;
 }
+.ov-s {
+    overflow: scroll;
+}
 body .d-n { /* override bootstrap */
     display: none;
 }
