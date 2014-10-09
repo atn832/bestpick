@@ -85,3 +85,7 @@ nav input[type="file"] {
     display: inline;
     float: right;
 }
+
+.D-n {
+    display: none;
+}

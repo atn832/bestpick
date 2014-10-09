@@ -4,17 +4,22 @@
 define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "transformation", "rectangle", "svg", "imagemetadata", "backbone"], function(Logger, Util, Promise, ImageProcessor, Job, FileSystem, Transformation, Rectangle, SVG, ImageMetadata) {
     var fullResolutionGenerationTimeout = 500;
     var thumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
-    
+    var id = 0;
     var ImageView = Backbone.View.extend({
         tagName: "span",
         className: "galleryImage",
         initialize: function() {
+            this.id = id++;
 //            this.listenTo(this.model, "change", this.render);
             this.model.on("all", function(event) {
 //                Logger.log("iv model changed", event);
                 this.render();
             }.bind(this));
             
+            if (this.attributes && this.attributes.thumbnailUpdateEnabled) {
+                this.setThumbnailUpdateEnabled(true);
+            }
+
             /*
                 the DOM will look like this:
                 <g transform="translate(...)">
@@ -94,7 +99,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                 }
                 try {
                     ImageProcessor.getInstance().getQueue().enqueue(new Job({
-                        priority: Job.Priority.High,
+                        priority: Job.Priority.High + (instance.isThumbnailUpdateEnabled()? 2: 0),
                         f: getMetadata
                     }));
                 }
@@ -143,6 +148,12 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                     this.tileBorder.setAttribute("class", className);
                 }
             }
+        },
+        setThumbnailUpdateEnabled: function(enabled) {
+            this.thumbnailUpdateEnabled = enabled;
+        },
+        isThumbnailUpdateEnabled: function() {
+            return this.thumbnailUpdateEnabled;
         },
         /**
         * Returns a promise for the size of the full resolution image
@@ -206,6 +217,9 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             return this.tileBorder.getBoundingClientRect();
         },
         requestThumbnailUpdate: function() {
+            if (!this.isThumbnailUpdateEnabled()) {
+                return;
+            }
             if (this.timer)
                 clearTimeout(this.timer);
             if (this.currentJob) {
@@ -229,10 +243,11 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                     // no skewing, no rotation
                     var instance = this;
                     var newJob = new Job({
-                        priority: Job.Priority.High,
+                        priority: Job.Priority.Low + (this.isThumbnailUpdateEnabled()? 2: 0),
                         f: generateSubtile
                     });
                     function generateSubtile(resolve, reject) {
+                        console.log("generate subtile");
                         Promise.all([instance.getFullImagePromise(), instance.getFullSizePromise()]).then(function(results) {
                             var fullImage = results[0];
                             var fullSize = results[1];
@@ -264,7 +279,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                         resolve(fullImage);
                     };
                     var url = image.get("url");
-                    Logger.log("setting fullimage on img", url);
+                    Logger.log(this.id, "setting fullimage on img", url);
                     var uri = FileSystem.getInstance().getDataURI(url);
                     uri.then(function(uri) {
                         Logger.log("setting fullimage", url);

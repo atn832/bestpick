@@ -1,24 +1,29 @@
 define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg", "backbone"], function(Logger, Promise, Gallery, ImageView, GalleryViewSettings, SVG) {
     var TileSpacing = 4;
     var StandardTileSize = 100;
-    
+    var id = 0;
     var GalleryView = Backbone.View.extend({
         tagName: "div",
         className: "gallery",
         initialize: function() {
+            this.id = id++;
             Logger.log("gv init, model:", this.model);
 //            this.model.on("all", function(event) {
 //                Logger.log("gv model event:", event);
 //                this.render();
 //            }.bind(this));
             this.imageViews = {};
+            this.visible = true;
             
             this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             this.svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
             this.svg.setAttribute("version", "1.1");
             
             this.el.appendChild(this.svg);
-            
+            if (this.attributes && this.attributes.showSelected) {
+                this.setShowSelected(true);
+            }
+
             var instance = this;
             window.addEventListener("resize", function() {
                 window.requestAnimationFrame(render.bind(instance));
@@ -29,6 +34,14 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             }
         },
         render: render,
+        setVisible: function(isVisible) {
+            this.visible = isVisible;
+            this.render();
+            this.trigger("change:isVisible");
+        },
+        isVisible: function() {
+            return this.visible;
+        },
         setShowSelected: function(b) {
             Logger.log("gv setShowSelected", b);
             this.showSelected = b;
@@ -54,7 +67,10 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             var selectedImages = gallery.get("selectedImages");
             return selectedImages;
         },
-        removeOrphanImages: function() {
+        /*
+        * Removes images that have been deleted or should not be displayed from the cache and the DOM
+        */
+        removeOrphanImages: function(imagesToDisplay) {
             var allImages = this.getAllGalleryImages();
             var imageViewsToRemove = [];
             for (var cid in this.imageViews) {
@@ -63,7 +79,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
 
                 var imageView = value;
                 var image = imageView.model;
-                if (allImages.indexOf(image) < 0)
+                if (allImages.indexOf(image) < 0 || imagesToDisplay.indexOf(image) < 0)
                     imageViewsToRemove.push(imageView);
             }
             imageViewsToRemove.forEach(function(imageView) {
@@ -78,6 +94,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
     function render() {
         Logger.log("gallery view render");
         var el = this.el;
+        el.classList.toggle("D-n", !this.visible);
         
         this.svg.setAttribute("width", "100%");
         
@@ -86,12 +103,12 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         var allGalleryImages = this.getAllGalleryImages();
         var imagesToDisplay = showSelected?
             this.getSelectedGalleryImages() : allGalleryImages;
+        console.log(imagesToDisplay.length, " to display", this.id);
         var instance = this;
         
-        var allViews = allGalleryImages.map(getImageView.bind(this));
         var viewsToDisplay = imagesToDisplay.map(getImageView.bind(this));
                 
-        this.removeOrphanImages();
+        this.removeOrphanImages(imagesToDisplay);
         
         var gallerySize;
         
@@ -192,13 +209,12 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
                 // reset scale and translation in displayed tiles
                 this.resetTransformation();
             }
-            allViews.forEach(function(imageView) {
+            viewsToDisplay.forEach(function(imageView, index) {
                 if (imageView.el.parentElement !== this.svg)
                     this.svg.appendChild(imageView.el);
 
                 imageView.setVisible(false);
-            }.bind(this));
-            viewsToDisplay.forEach(function(imageView, index) {
+
                 var rowIndex = Math.floor(index / gridSize.width);
                 var colIndex = index % gridSize.width;
                 latestRowIndex = rowIndex;
@@ -272,13 +288,18 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
     
     function getImageView(image) {
         var cid = image.cid;
+        var imageView;
         if (!(cid in this.imageViews)) {
             // make the image element
-            this.imageViews[image.cid] = new ImageView({
-                model: image
+            console.log(this.id, "new image");
+            imageView = new ImageView({
+                model: image,
+                attributes: { thumbnailUpdateEnabled: this.isShowSelected() }
             });
+            this.imageViews[image.cid] = imageView;
         }
-        return this.imageViews[cid];
+        imageView = this.imageViews[cid];
+        return imageView;
     }
     
     function getGridSize(gallerySize, imageSizes) {

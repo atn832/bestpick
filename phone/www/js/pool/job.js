@@ -3,7 +3,9 @@ define(["backbone"], function(Backbone) {
     
     Job.Priority = {
         Low: 1,
-        High: 2
+        High: 2,
+        Higher: 3,
+        Highest: 4
     };
     
     return Job;
