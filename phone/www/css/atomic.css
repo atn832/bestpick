@@ -51,8 +51,8 @@
 .m-0 {
 	margin: 0;
 }
-.ov-s {
-    overflow: scroll;
+.ov-y-a {
+    overflow-y: auto;
 }
 body .d-n { /* override bootstrap */
     display: none;
