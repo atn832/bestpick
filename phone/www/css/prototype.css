@@ -11,15 +11,6 @@ html, body {
 
 #container {
     border: 0px solid red;
-    height: 100%;
-}
-
-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3em;
 }
 
 input {
@@ -75,7 +66,6 @@ body .gallery .focus {
 }
 
 #status {
-    position:fixed;
     top: 0;
     left: 0;
 }
