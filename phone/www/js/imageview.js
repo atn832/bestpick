@@ -91,7 +91,8 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                             width: fullImage.width,
                             height: fullImage.height
                         });
-                        var thumbnailURI = resizeImage(fullImage, thumbnailPixelSize, thumbnailPixelSize);
+                        var cover = !instance.isThumbnailUpdateEnabled();
+                        var thumbnailURI = resizeImage(fullImage, thumbnailPixelSize, thumbnailPixelSize, cover);
                         metadata.set(ImageMetadata.Keys.ThumbnailURI, thumbnailURI);
                         resolveMain(metadata);
                         resolve();
@@ -124,29 +125,14 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
         render: function() {
             var image = this.model;
             if (image) {
-                var instance = this;
+                this.tileBorder.classList.add("tile");
+                this.tileBorder.classList.toggle("selected", image.get("isSelected"));
+                this.tileBorder.classList.toggle("favorite", image.get("isFavorite"));
                 
-                var className = "tile ";
-                // Note: as of Jan 2014, JQuery's addClass and removeClass
-                // will not support SVG
-                if (image.get("isSelected"))
-                    className += "selected ";
-                if (image.get("isFavorite"))
-                    className += "favorite ";
-                
-                if (!this.isVisible()) {
-//                    Logger.log("hidden");
-                    this.el.setAttribute("class", "hidden");
-                }
-                else {
-//                    Logger.log("visible");
-                    this.el.setAttribute("class", "");
-                }
-                //Logger.log("classname:" + className);
-                if (className !== this.className) {
-                    this.className = className;
-                    this.tileBorder.setAttribute("class", className);
-                }
+                // from http://www.eccesignum.org/blog/solving-display-refreshredrawrepaint-issues-in-webkit-browsers
+                this.tileBorder.style.display='none';
+                this.tileBorder.offsetHeight; // no need to store this anywhere, the reference is enough
+                this.tileBorder.style.display='block';
             }
         },
         setThumbnailUpdateEnabled: function(enabled) {
@@ -305,28 +291,43 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
     
     /**
     * Resize an image and return the resized image's data URI
+    * @param cover if false, will do contain instead
     **/
-    function resizeImage(srcImageObject, width, height) {
-        Logger.log("resizeImage" + width + "," + height);
+    function resizeImage(srcImageObject, width, height, cover) {
+        Logger.log("resizeImage, cover" + cover + "," + width + "," + height);
         var newWidth = width;
         var newHeight = height;
     
         // Calculate a new scale
         // The new scale will be the max of the two possible scales
-        var scale = Math.max(newWidth / srcImageObject.width, newHeight / srcImageObject.height);
+        
+        var scale = cover?
+            Math.max(newWidth / srcImageObject.width, newHeight / srcImageObject.height) :
+            Math.min(newWidth / srcImageObject.width, newHeight / srcImageObject.height);
         
         // New canvas
         var dst_canvas = document.createElement('canvas');
-        dst_canvas.width = width;
-        dst_canvas.height = height;
+        if (cover) {
+            dst_canvas.width = width;
+            dst_canvas.height = height;
+        }
+        else {
+            dst_canvas.width = scale * srcImageObject.width;
+            dst_canvas.height = scale * srcImageObject.height;
+        }
     
         // Draw Image content in canvas
         var dst_ctx = dst_canvas.getContext('2d');
         // the image will be cropped, so we center it
-        var dx = -(srcImageObject.width * scale - width) / 2;
-        var dy = -(srcImageObject.height * scale - height) / 2;
-        dst_ctx.drawImage(srcImageObject, dx, dy, srcImageObject.width * scale, srcImageObject.height * scale);
-    
+        if (cover) {
+            var dx = -(srcImageObject.width * scale - width) / 2;
+            var dy = -(srcImageObject.height * scale - height) / 2;
+            dst_ctx.drawImage(srcImageObject, dx, dy, srcImageObject.width * scale, srcImageObject.height * scale);
+        }
+        else {
+            dst_ctx.drawImage(srcImageObject, srcImageObject.width * scale, srcImageObject.height * scale);
+        }
+
         // Replace source of Image
         return dst_canvas.toDataURL();
     }

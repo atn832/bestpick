@@ -136,9 +136,9 @@ function initialize(Logger) {
         // if touch on it, toggle
         
         function handleTap(event) {
-            Logger.log("tap" + event.shiftKey + event);
             var shiftKey = event.gesture.touches[0].shiftKey;
             var el = event.target;
+//            Logger.log("tap" + event.shiftKey + event);
             if (el.model) {
                 var image = el.model;
                 var images = g.get("images");
@@ -170,6 +170,7 @@ function initialize(Logger) {
                 var newPropertyValue = !shiftKey?
                     !image.get(propertyName) : // alternate
                     images.at(prevSelectedImageIndexStart).get(propertyName); // copy from selection start
+//                Logger.log("setting " + propertyName + " to " + newPropertyValue);
                 imagesToClearout.forEach(function(image) {
                     image.set(propertyName, !newPropertyValue)
                 });
@@ -189,7 +190,7 @@ function initialize(Logger) {
         
         Hammer(cgv.el, {prevent_default:true}).on("pinch", function(event) {
             var newScale = event.gesture.scale;
-            Logger.log("pinch " + newScale);
+//            Logger.log("pinch " + newScale);
             
             var relScale = newScale / lastPinchScale;
             lastPinchScale = newScale;
@@ -216,7 +217,7 @@ function initialize(Logger) {
             var dx = newCenter.pageX - lastDragCenter.pageX;
             var dy = newCenter.pageY - lastDragCenter.pageY;
             cgv.translate(dx, dy);
-            Logger.log("drag " + dx + " " + dy);
+//            Logger.log("drag " + dx + " " + dy);
             lastDragCenter = newCenter;
         });
         
