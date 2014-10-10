@@ -318,15 +318,11 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
     
         // Draw Image content in canvas
         var dst_ctx = dst_canvas.getContext('2d');
-        // the image will be cropped, so we center it
-        if (cover) {
-            var dx = -(srcImageObject.width * scale - width) / 2;
-            var dy = -(srcImageObject.height * scale - height) / 2;
-            dst_ctx.drawImage(srcImageObject, dx, dy, srcImageObject.width * scale, srcImageObject.height * scale);
-        }
-        else {
-            dst_ctx.drawImage(srcImageObject, srcImageObject.width * scale, srcImageObject.height * scale);
-        }
+        // Center the image if it is cropped:
+        // translate by -(scaled size - output size) / 2
+        var dx = -(srcImageObject.width * scale - dst_canvas.width) / 2;
+        var dy = -(srcImageObject.height * scale - dst_canvas.height) / 2;
+        dst_ctx.drawImage(srcImageObject, dx, dy, srcImageObject.width * scale, srcImageObject.height * scale);
 
         // Replace source of Image
         return dst_canvas.toDataURL();

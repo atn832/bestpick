@@ -73,3 +73,7 @@ body .gallery .focus {
 nav input[type="file"] {
     display: inline;
 }
+
+nav button {
+    width: 85px;
+}
