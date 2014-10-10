@@ -312,17 +312,20 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
         var newHeight = height;
     
         // Calculate a new scale
-        // The new scale will be the minimum of the two possible scales
-        var scale = Math.min(newWidth / srcImageObject.width, newHeight / srcImageObject.height);
+        // The new scale will be the max of the two possible scales
+        var scale = Math.max(newWidth / srcImageObject.width, newHeight / srcImageObject.height);
         
         // New canvas
         var dst_canvas = document.createElement('canvas');
-        dst_canvas.width = srcImageObject.width * scale;
-        dst_canvas.height = srcImageObject.height * scale;
+        dst_canvas.width = width;
+        dst_canvas.height = height;
     
         // Draw Image content in canvas
         var dst_ctx = dst_canvas.getContext('2d');
-        dst_ctx.drawImage(srcImageObject, 0, 0, parseInt(srcImageObject.width * scale), parseInt(srcImageObject.height * scale));
+        // the image will be cropped, so we center it
+        var dx = -(srcImageObject.width * scale - width) / 2;
+        var dy = -(srcImageObject.height * scale - height) / 2;
+        dst_ctx.drawImage(srcImageObject, dx, dy, srcImageObject.width * scale, srcImageObject.height * scale);
     
         // Replace source of Image
         return dst_canvas.toDataURL();
