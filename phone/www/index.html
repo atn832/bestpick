@@ -14,10 +14,8 @@
         <script src="js/app.js"></script>
     </head>
     <body class="fx fx-c">
-        <span id="status" class="debug fx-n"></span>
-        <div id="container" class="fx-g-1 pos-r ov-y-a"></div>
-        <nav id="toolbar" class="fx-n bgc-dg pos-r fx fx-r">
-            <button type="button" id="btnCompare" class="btn btn-default">
+        <nav id="toolbar" class="fx-n bgc-lg pos-r">
+            <button type="button" id="btnCompare" class="btn btn-default fl-end">
                 <h3 class="m-0"><span class="glyphicon glyphicon-th-large"></span></h3>
                 <div>Compare</div>
             </button>
@@ -25,11 +23,15 @@
                 <h3 class="m-0"><span class="glyphicon glyphicon-chevron-left"></span></h3>
                 <div>Back</div>
             </button>
-            <button type="button" id="btnKeep" class="btn btn-default d-n">
+            <button type="button" id="btnKeep" class="btn btn-default d-n fl-end">
                 <h3 class="m-0"><span class="glyphicon glyphicon-star"></span></h3>
                 <div>Keep</div>
             </button>
-            <span class="bgc-g fx-g-1 pos-r mstart-30 btn btn-default">
+        </nav>
+        <span id="status" class="debug fx-n"></span>
+        <div id="container" class="fx-g-1 pos-r ov-y-a"></div>
+        <nav class="pos-r" style="height:70px;">
+            <span class="bgc-g pos-r w-100 h-100 btn btn-default">
                 <div class="pos-a va-c ta-c w-100 start-0"><h3 class="m-0">Drop zone</h3></div>
                 <input type="file" value="Open Folder" id="dirdrop" nwdirectory class="pos-a start-0 t-0 w-100 h-100 op-0" />
             </span>

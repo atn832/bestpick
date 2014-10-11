@@ -1,5 +1,5 @@
 define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg", "backbone"], function(Logger, Promise, Gallery, ImageView, GalleryViewSettings, SVG) {
-    var TileSpacing = 4;
+    var TileSpacing = 2;
     var StandardTileSize = 100;
     var id = 0;
     var GalleryView = Backbone.View.extend({
