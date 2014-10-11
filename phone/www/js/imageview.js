@@ -3,7 +3,8 @@
 **/
 define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "transformation", "rectangle", "svg", "imagemetadata", "backbone"], function(Logger, Util, Promise, ImageProcessor, Job, FileSystem, Transformation, Rectangle, SVG, ImageMetadata) {
     var fullResolutionGenerationTimeout = 500;
-    var thumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
+    var BigThumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
+    var SmallThumbnailPixelSize = 100; // ideally this could be dynamically computed depending on the device's capabilities
     var id = 0;
     var ImageView = Backbone.View.extend({
         tagName: "span",
@@ -92,7 +93,8 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                             height: fullImage.height
                         });
                         var cover = !instance.isThumbnailUpdateEnabled();
-                        var thumbnailURI = resizeImage(fullImage, thumbnailPixelSize, thumbnailPixelSize, cover);
+                        var size = instance.getThumbnailSize();
+                        var thumbnailURI = resizeImage(fullImage, size.width, size.height, cover);
                         metadata.set(ImageMetadata.Keys.ThumbnailURI, thumbnailURI);
                         resolveMain(metadata);
                         resolve();
@@ -193,6 +195,13 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             this.image.setAttribute("transform", strmatrix);
             
             this.requestThumbnailUpdate();
+        },
+        getThumbnailSize: function() {
+            var size = this.isThumbnailUpdateEnabled()? BigThumbnailPixelSize: SmallThumbnailPixelSize;
+            return {
+                width: size,
+                height: size
+            };
         },
         /**
         * @returns the bounding rectangle of the tile
@@ -332,7 +341,6 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
     * @param matrix matrix of the full transformation from src image size to device (ie it also contains fit transformation in it)
     **/
     function getSubImage(srcImageObject, thumbnailSize, matrix) {
-        Logger.log("get sub image");
         // New canvas
         var dst_canvas = document.createElement('canvas');
         dst_canvas.width = thumbnailSize.width;
