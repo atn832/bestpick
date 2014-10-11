@@ -4,6 +4,7 @@
         <title>Best Pick</title>
 <!--        Possibly useful for mobile browsers-->
 <!--        <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1, maximum-scale=1">-->
+        <link rel="stylesheet" href="css/atomic.css">
         <link rel="stylesheet" href="css/prototype.css">
         <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
         <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
@@ -12,21 +13,25 @@
         <script src="js/main.js"></script>
         <script src="js/app.js"></script>
     </head>
-    <body>
-        <span id="status" class="debug"></span>
-        <div id="container"></div>
-        <nav id="toolbar">
-            <input type="file" value="Open Folder" id="dirdrop" nwdirectory class="btn btn-default">
-            <input type="button" value="Select" id="btnSelect" class="btn btn-default">
-            <input type="button" value="Keep" id="btnKeep" class="btn btn-default">
-            <span class="debug">
-            <input type="button" value="Logs" id="btnLogs" class="btn btn-default">
-<!--
-                Workaround to work with css rule: last of type.
-                TODO: find a more elegant way to not have margin for the last visible element in the toolbar
--->
-                <input type="button" value="+" id="btnZoomIn" class="btn btn-default">
-                <input type="button" value="-" id="btnZoomOut" class="btn btn-default">
+    <body class="fx fx-c">
+        <span id="status" class="debug fx-n"></span>
+        <div id="container" class="fx-g-1 pos-r ov-y-a"></div>
+        <nav id="toolbar" class="fx-n bgc-dg pos-r fx fx-r">
+            <button type="button" id="btnCompare" class="btn btn-default">
+                <h3 class="m-0"><span class="glyphicon glyphicon-th-large"></span></h3>
+                <div>Compare</div>
+            </button>
+            <button type="button" id="btnBack" class="btn btn-default d-n">
+                <h3 class="m-0"><span class="glyphicon glyphicon-chevron-left"></span></h3>
+                <div>Back</div>
+            </button>
+            <button type="button" id="btnKeep" class="btn btn-default d-n">
+                <h3 class="m-0"><span class="glyphicon glyphicon-star"></span></h3>
+                <div>Keep</div>
+            </button>
+            <span class="bgc-g fx-g-1 pos-r mstart-30 btn btn-default">
+                <div class="pos-a va-c ta-c w-100 start-0"><h3 class="m-0">Drop zone</h3></div>
+                <input type="file" value="Open Folder" id="dirdrop" nwdirectory class="pos-a start-0 t-0 w-100 h-100 op-0" />
             </span>
         </nav>
     </body>

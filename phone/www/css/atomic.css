@@ -1,0 +1,77 @@
+.fx {
+    display: -webkit-flex;
+    display: flex;
+}
+.fx-r {
+    -webkit-flex-direction: row;
+    flex-direction: row;
+}
+.fx-c {
+    -webkit-flex-direction: column;
+    flex-direction: column;
+}
+.fx-g-1 {
+    -webkit-flex-grow: 1;
+    flex-grow: 1;
+}
+.fx-n {
+    -webkit-flex: none;
+    flex: none;
+}
+.h-100 {
+	height: 100%;
+}
+.w-100 {
+	width: 100%;
+}
+.pos-a {
+	position: absolute;
+}
+.pos-r {
+	position: relative;
+}
+.start-0 {
+    left: 0;
+}
+.end-0 {
+    right: 0;
+}
+.t-0 {
+    top: 0;
+}
+.b-0 {
+    bottom: 0;
+}
+.bgc-dg {
+	background-color: #555;
+}
+.bgc-g {
+    background-color: #aaa;
+}
+.m-0 {
+	margin: 0;
+}
+.ov-y-a {
+    overflow-y: auto;
+}
+body .d-n { /* override bootstrap */
+    display: none;
+}
+.v-h {
+    visibility: hidden;
+}
+.ta-c {
+    text-align: center;
+}
+.va-c {
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+.mstart-30 {
+    margin-left: 30px;
+}
+.op-0 {
+    opacity: 0;
+}
