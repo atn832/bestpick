@@ -2,15 +2,10 @@ var containerID = "container";
 var compareBtnID = "btnCompare";
 var backBtnID = "btnBack";
 var keepBtnID = "btnKeep";
-var logsBtnID = "btnLogs";
-var zoomInBtnID = "btnZoomIn";
-var zoomOutBtnID = "btnZoomOut";
 var dirdropID = "dirdrop";
 var compareBtn;
 var backBtn;
 var keepBtn;
-var zoomInBtn;
-var zoomOutBtn;
 var dirdrop;
 
 var gallery;
@@ -84,23 +79,6 @@ function initialize(Logger) {
     });
     
     requirejs(["filesystem", "gallery", "galleryview", "image", "logger", "jquery.mousewheel"], function(FileSystem, Gallery, GalleryView, Image, Logger, m) {
-        var logsBtn = document.getElementById(logsBtnID);
-        if (logsBtn) {
-            logsBtn.addEventListener("click", function() {
-                Logger.showAll();
-            });
-        }
-        
-        zoomInBtn = document.getElementById(zoomInBtnID);
-        zoomOutBtn = document.getElementById(zoomOutBtnID);
-        var ratio = 1.1;
-        zoomInBtn.addEventListener("click", function() {
-            compareGalleryView.zoom(ratio);
-        });
-        zoomOutBtn.addEventListener("click", function() {
-            compareGalleryView.zoom(1/ratio);
-        });
-
         Logger.log("initializing gallery");
         var container = document.getElementById(containerID);
         
@@ -293,8 +271,6 @@ function updateButtons() {
     setVisible(compareBtn, page === 0);
     setVisible(backBtn, page === 1);
     setVisible(keepBtn, page === 1);
-    setVisible(zoomInBtn, page === 1);
-    setVisible(zoomOutBtn, page === 1);
 
     if (page === 0) {
         var selectedImages = gallery.get("selectedImages");
