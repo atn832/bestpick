@@ -1,4 +1,5 @@
 var containerID = "container";
+var compareContainerID = "compareContainer";
 var compareBtnID = "btnCompare";
 var backBtnID = "btnBack";
 var keepBtnID = "btnKeep";
@@ -24,7 +25,7 @@ function initialize(Logger) {
             var dir = dirdrop.value
             Logger.log(dirdrop.value);
             requirejs(["filesystem", "bootstrap"], function(FileSystem) {
-                $('.carousel').carousel("next");
+                $(".carousel").carousel("next");
                 var images = FileSystem.getInstance().getDir(dirdrop.value);
                 gallery.get("images").set(images);
                 galleryView.render();
@@ -38,15 +39,15 @@ function initialize(Logger) {
         showPage(1);
     });
     
-    backBtn = document.getElementById(backBtnID);
+    // backBtn = document.getElementById(backBtnID);
     
-    backBtn.addEventListener("click", function() {
-        // reset favorites
-        resetFlag(gallery.get("selectedImages"), "isSelected");
-        resetFlag(gallery.get("favoriteImages"), "isFavorite");
-        // view all
-        showPage(0);
-    });
+    // backBtn.addEventListener("click", function() {
+    //     // reset favorites
+    //     resetFlag(gallery.get("selectedImages"), "isSelected");
+    //     resetFlag(gallery.get("favoriteImages"), "isFavorite");
+    //     // view all
+    //     showPage(0);
+    // });
     
     keepBtn = document.getElementById(keepBtnID);
     keepBtn.addEventListener("click", function() {
@@ -82,7 +83,8 @@ function initialize(Logger) {
     requirejs(["filesystem", "gallery", "galleryview", "image", "logger", "jquery.mousewheel"], function(FileSystem, Gallery, GalleryView, Image, Logger, m) {
         Logger.log("initializing gallery");
         var container = document.getElementById(containerID);
-        
+        var compareContainer = document.getElementById(compareContainerID);
+
         var g = new Gallery();
         gallery = g;
         var dir = FileSystem.getInstance().getDir();
@@ -96,7 +98,7 @@ function initialize(Logger) {
         galleryView = gv;
         var cgv = new GalleryView({
             model: g,
-            container: container,
+            container: compareContainer,
             // have to set it at initialization, or it will load all images
             attributes: {showSelected: true}
         });
@@ -104,7 +106,7 @@ function initialize(Logger) {
         compareGalleryView = cgv;
         
         container.appendChild(gv.el);
-        container.appendChild(cgv.el);
+        compareContainer.appendChild(cgv.el);
         // todo: make gv listen to events so it can rerender
         // itself when added to a new parent
         gv.render();
@@ -260,6 +262,13 @@ function showPage(page) {
     var showSelected = page === 1;
     galleryView.setVisible(!showSelected);
     compareGalleryView.setVisible(showSelected);
+    if (page === 1) {
+        $(".carousel").carousel("next");
+        compareGalleryView.render();
+    }
+    else {
+        $(".carousel").carousel("prev");
+    }
     updateButtons();
 }
 function getPage() {
@@ -268,10 +277,6 @@ function getPage() {
 
 function updateButtons() {
     var page = getPage();
-
-    setVisible(compareBtn, page === 0);
-    setVisible(backBtn, page === 1);
-    setVisible(keepBtn, page === 1);
 
     if (page === 0) {
         var selectedImages = gallery.get("selectedImages");
@@ -288,8 +293,4 @@ function resetFlag(collection, flagname) {
     items.forEach(function(item) {
         item.set(flagname, false);
     });
-}
-
-function setVisible(element, visible) {
-    element.classList.toggle("d-n", !visible);
 }
