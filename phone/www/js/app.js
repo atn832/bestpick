@@ -1,17 +1,22 @@
+var Page = {
+    Select: "select",
+    Compare: "compare"
+};
 var containerID = "container";
 var compareContainerID = "compareContainer";
 var compareBtnID = "btnCompare";
-var backBtnID = "btnBack";
+var cancelCompareBtnID = "btnCancelCompare";
 var keepBtnID = "btnKeep";
 var dirdropID = "dirdrop";
 var compareBtn;
-var backBtn;
+var cancelCompareBtn;
 var keepBtn;
 var dirdrop;
 
 var gallery;
 var galleryView;
 var compareGalleryView;
+var currentPage;
 
 document.addEventListener("DOMContentLoaded", function(event) {
     console.log("DOM fully loaded and parsed");
@@ -36,18 +41,8 @@ function initialize(Logger) {
     compareBtn = document.getElementById(compareBtnID);
     
     compareBtn.addEventListener("click", function() {
-        showPage(1);
+        showPage(Page.Compare);
     });
-    
-    // backBtn = document.getElementById(backBtnID);
-    
-    // backBtn.addEventListener("click", function() {
-    //     // reset favorites
-    //     resetFlag(gallery.get("selectedImages"), "isSelected");
-    //     resetFlag(gallery.get("favoriteImages"), "isFavorite");
-    //     // view all
-    //     showPage(0);
-    // });
     
     keepBtn = document.getElementById(keepBtnID);
     keepBtn.addEventListener("click", function() {
@@ -66,20 +61,25 @@ function initialize(Logger) {
                 FileSystem.getInstance().remove(url);
             });
         });
-        
+
         // unselect all:
         // two-way setting of these is not implemented
 //        gallery.get("selectedImages").reset();
 //        gallery.get("favoriteImages").reset();
         resetFlag(gallery.get("selectedImages"), "isSelected");
         resetFlag(gallery.get("favoriteImages"), "isFavorite");
-        
-        // view all again
-        galleryView.setShowSelected(false);
-        galleryView.setVisible(true);
-        compareGalleryView.setVisible(false);
+        showPage(Page.Select);
     });
     
+    cancelCompareBtn = document.getElementById(cancelCompareBtnID);
+    cancelCompareBtn.addEventListener("click", function() {
+        // reset favorites
+        resetFlag(gallery.get("selectedImages"), "isSelected");
+        resetFlag(gallery.get("favoriteImages"), "isFavorite");
+        // view all
+        showPage(Page.Select);
+    });
+
     requirejs(["filesystem", "gallery", "galleryview", "image", "logger", "jquery.mousewheel"], function(FileSystem, Gallery, GalleryView, Image, Logger, m) {
         Logger.log("initializing gallery");
         var container = document.getElementById(containerID);
@@ -102,7 +102,6 @@ function initialize(Logger) {
             // have to set it at initialization, or it will load all images
             attributes: {showSelected: true}
         });
-        cgv.setVisible(false);
         compareGalleryView = cgv;
         
         container.appendChild(gv.el);
@@ -147,7 +146,7 @@ function initialize(Logger) {
                     prevSelectedImageIndexStart = selectedImageIndex;
                     prevSelectedImageIndexEnd = selectedImageIndex;
                 }
-                var propertyName = compareGalleryView.isVisible()? "isFavorite":  "isSelected";
+                var propertyName = getPage() === Page.Compare? "isFavorite":  "isSelected";
                 var newPropertyValue = !shiftKey?
                     !image.get(propertyName) : // alternate
                     images.at(prevSelectedImageIndexStart).get(propertyName); // copy from selection start
@@ -250,41 +249,40 @@ function initialize(Logger) {
 function hardCodedTest() {
 //    gallery.get("images").at(0).set("isSelected", true);
 //    gallery.get("images").at(1).set("isSelected", true);
-//    galleryView.setShowSelected(true);
 //    gallery.get("images").at(0).set("isFavorite", true);
-    
 }
 
-/*
-    page = 0 or 1
-*/
 function showPage(page) {
-    var showSelected = page === 1;
-    galleryView.setVisible(!showSelected);
-    compareGalleryView.setVisible(showSelected);
-    if (page === 1) {
+    if (page === Page.Compare) {
         $(".carousel").carousel("next");
         compareGalleryView.render();
     }
     else {
         $(".carousel").carousel("prev");
+        galleryView.render();
     }
+    currentPage = page;
     updateButtons();
 }
 function getPage() {
-    return galleryView.isVisible()? 0: 1;
+    // TODO: retrieve info from carousel instance
+    return currentPage;
 }
 
 function updateButtons() {
     var page = getPage();
-
-    if (page === 0) {
+    var disabled;
+    if (page !== Page.Compare) {
         var selectedImages = gallery.get("selectedImages");
-        compareBtn.disabled = selectedImages.length == 0;
+        disabled = selectedImages.length == 0
+        compareBtn.disabled = disabled;
+        $(compareBtn).parent().toggleClass("disabled", disabled);
     }
     else {
         var favoriteImages = gallery.get("favoriteImages");
-        keepBtn.disabled = favoriteImages.length === 0;
+        disabled = favoriteImages.length === 0;
+        keepBtn.disabled = disabled;
+        $(keepBtn).parent().toggleClass("disabled", disabled);
     }
 }
 

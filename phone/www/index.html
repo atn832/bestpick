@@ -25,7 +25,7 @@
                                 <!-- placeholder buttons so the title shows up correctly -->
                                 <li class="v-h"><a href="#carousel-example-generic" role="button" data-slide="next"><span class="glyphicon glyphicon-chevron-right"></span></a></li>
                                 <li class="fx-g-1"><h3 class="ta-c va-c pos-a w-100 m-0">Drag pictures to the drop zone</h3></li>
-                                <li><a href="#carousel-example-generic" role="button" data-slide="next"><span class="glyphicon glyphicon-chevron-right"></span></a></li>
+                                <li class="v-h"><a href="#carousel-example-generic" role="button" data-slide="next"><span class="glyphicon glyphicon-chevron-right"></span></a></li>
                             </ul>    
                         </nav>
                         <div class="fx-g-1 pos-r bgc-dg">
@@ -50,13 +50,12 @@
                             <ul class="nav navbar-nav w-100 fx fx-r">
                                 <li><a href="#carousel-example-generic" role="button" data-slide="prev"><span class="glyphicon glyphicon-chevron-left"></span></a></li>
                                 <li class="fx-g-1"><h3 class="ta-c va-c pos-a w-100 m-0">Select pictures to process</h3></li>
-                                <li><a href="#carousel-example-generic" role="button" data-slide="next"><span class="glyphicon glyphicon-chevron-right"></span></a></li>
                             </ul>    
                         </nav>
                         <div id="container" class="fx-g-1 pos-r ov-y-a"></div>
                         <nav id="toolbar" class="navbar navbar-default navbar-fixed-bottom fx-n bgc-lg pos-r" role="navigation" style="position: relative; /* cancel navbar-fixed-bottom's position fixed */">
                             <ul class="nav navbar-nav navbar-right ta-c" style="margin-right: 0; /* cancel navbar-right's negative margin-right */">
-                                <li>
+                                <li style="display: none;">
                                     <a href="#" id="btnDelete">
                                         <h3 class="m-0"><span class="glyphicon glyphicon-trash"></span></h3>
                                         <div>Delete</div>
@@ -76,7 +75,7 @@
                     <div class="fx fx-c h-100">
                         <nav id="toolbar" class="navbar navbar-default fx-n bgc-lg pos-r" role="navigation">
                             <ul class="nav navbar-nav w-100 fx fx-r">
-                                <li><a href="#carousel-example-generic" role="button" data-slide="prev"><span class="glyphicon glyphicon-chevron-left"></span></a></li>
+                                <li><a id="btnCancelCompare" href="#carousel-example-generic" role="button" data-slide="prev"><span class="glyphicon glyphicon-chevron-left"></span></a></li>
                                 <li class="fx-g-1"><h3 class="ta-c va-c pos-a w-100 m-0">Select pictures to keep</h3></li>
                             </ul>    
                         </nav>
