@@ -2,6 +2,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
     var TileSpacing = 2;
     var StandardTileSize = 100;
     var id = 0;
+    var renderCount = 0;
     var GalleryView = Backbone.View.extend({
         tagName: "div",
         className: "gallery",
@@ -72,6 +73,9 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         * Removes images that have been deleted or should not be displayed from the cache and the DOM
         */
         removeOrphanImages: function(imagesToDisplay) {
+            if (this.id === 1) {
+                debugger;
+            }
             var allImages = this.getAllGalleryImages();
             var imageViewsToRemove = [];
             for (var cid in this.imageViews) {
@@ -94,6 +98,8 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
 
     function render() {
         Logger.log("gallery view render");
+        var currentRenderCount = ++renderCount;
+
         var el = this.el;
         el.classList.toggle("d-n", !this.visible);
         
@@ -105,8 +111,6 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         var imagesToDisplay = showSelected?
             this.getSelectedGalleryImages() : allGalleryImages;
         Logger.log(imagesToDisplay.length, " to display", this.id);
-        if (this.id === 1)
-            debugger;
         var instance = this;
         
         var gallerySize;
@@ -191,6 +195,11 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             }
         });
         gridAndTileSizePromise.then(function(result) {
+            // for some racing issues, we may be trying to render an old state
+            if (currentRenderCount < renderCount) {
+                // Logger.log("aborted render, " + currentRenderCount + " vs " + renderCount)
+                return;
+            }
 			try{
 			var tileSize = result.tileSize;
 			var gridSize = result.gridSize;
@@ -203,9 +212,6 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             viewsToDisplay.forEach(function(imageView) {
                 imageView.setSize(tileSize);
             });
-            if (instance.id === 1) {
-                debugger;
-            }
             var isRedrawRequired = !isSame(this.oldDisplaySettings, displaySettings);
             if (!isRedrawRequired) {
                 Logger.log("gallery view. render unnecessary");
@@ -223,8 +229,12 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
                 this.resetTransformation();
             }
             viewsToDisplay.forEach(function(imageView, index) {
-                if (imageView.el.parentElement !== this.svg)
+                if (imageView.el.parentElement !== this.svg) {
+                    if (instance.id === 1) {
+                        debugger;
+                    }
                     this.svg.appendChild(imageView.el);
+                }
 
                 imageView.setVisible(false);
 
@@ -339,7 +349,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
                     var imageSize = getStretchedSize(size, tileSize);
                     usedSize += imageSize.width * imageSize.height;
                 });
-                Logger.log("griddimensions (width, height, usedsize", gridWidth + " " + gridHeight + " " + usedSize);
+                // Logger.log("griddimensions (width, height, usedsize", gridWidth + " " + gridHeight + " " + usedSize);
                 if (!maxUsedSize || usedSize > maxUsedSize) {
                     bestGridSize = gridSize;
                     maxUsedSize = usedSize;
@@ -361,7 +371,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
     
     // returns the size of the image stretched to fit within some bounds
     function getStretchedSize(size, tileSize) {
-        Logger.log("getStretchedSize ", JSON.stringify(size), JSON.stringify(tileSize));
+        // Logger.log("getStretchedSize ", JSON.stringify(size), JSON.stringify(tileSize));
         var imageRatio = size.width / size.height;
         // fit width
         var imageSize = {

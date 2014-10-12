@@ -33,6 +33,7 @@ define(["logger", "image", "backbone"], function(Logger, Image) {
             
             var instance = this;
             this.get("images").on("remove", function(image) {
+                Logger.log("remove images from model", image);
                 this.get("selectedImages").remove(image);
                 this.get("favoriteImages").remove(image);
             }.bind(this));
