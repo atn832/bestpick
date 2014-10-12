@@ -4,10 +4,12 @@ var Page = {
 };
 var containerID = "container";
 var compareContainerID = "compareContainer";
+var deleteBtnID = "btnDelete";
 var compareBtnID = "btnCompare";
 var cancelCompareBtnID = "btnCancelCompare";
 var keepBtnID = "btnKeep";
 var dirdropID = "dirdrop";
+var deleteBtn;
 var compareBtn;
 var cancelCompareBtn;
 var keepBtn;
@@ -39,11 +41,24 @@ function initialize(Logger) {
     }
     
     compareBtn = document.getElementById(compareBtnID);
-    
     compareBtn.addEventListener("click", function() {
         showPage(Page.Compare);
     });
     
+    // deleteBtn = document.getElementById(deleteBtnID);
+    // deleteBtn.addEventListener("click", function() {
+    //     var selectedImages = gallery.get("selectedImages");
+    //     gallery.get("images").remove(selectedImages);
+    //     requirejs(["filesystem"], function(FileSystem) {
+    //         selectedImages.forEach(function(image) {
+    //             var url = image.get("url");
+    //             FileSystem.getInstance().remove(url);
+    //         });
+    //     });
+    //     resetFlag(gallery.get("selectedImages"), "isSelected");
+    //     // galleryView.render();
+    // });
+
     keepBtn = document.getElementById(keepBtnID);
     keepBtn.addEventListener("click", function() {
         // remove selected images that are not favorites
@@ -87,8 +102,8 @@ function initialize(Logger) {
 
         var g = new Gallery();
         gallery = g;
-        var dir = FileSystem.getInstance().getDir();
-        g.get("images").add(dir);
+        // var dir = FileSystem.getInstance().getDir();
+        // g.get("images").add(dir);
         
         // display images
         var gv = new GalleryView({

@@ -86,6 +86,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                 Logger.log("enqueuing job: metadata request");
                 function getMetadata(resolve, reject) {
                     instance.getFullImagePromise().then(function(fullImage) {
+                        try{
                         Logger.log("metadata promise");
                         var metadata = new ImageMetadata();
                         metadata.set(ImageMetadata.Keys.FullSize, {
@@ -98,6 +99,9 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                         metadata.set(ImageMetadata.Keys.ThumbnailURI, thumbnailURI);
                         resolveMain(metadata);
                         resolve();
+                        } catch (e) {
+                            Logger.log(e);
+                        }
                     }, Util.onRejected);
                 }
                 try {

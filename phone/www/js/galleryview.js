@@ -8,10 +8,10 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         initialize: function() {
             this.id = id++;
             Logger.log("gv init, model:", this.model);
-//            this.model.on("all", function(event) {
-//                Logger.log("gv model event:", event);
-//                this.render();
-//            }.bind(this));
+           this.model.on("all", function(event) {
+               // Logger.log("gv model event:", event);
+               this.render();
+           }.bind(this));
             this.imageViews = {};
             this.visible = true;
             
@@ -104,12 +104,10 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         var allGalleryImages = this.getAllGalleryImages();
         var imagesToDisplay = showSelected?
             this.getSelectedGalleryImages() : allGalleryImages;
-        console.log(imagesToDisplay.length, " to display", this.id);
+        Logger.log(imagesToDisplay.length, " to display", this.id);
+        if (this.id === 1)
+            debugger;
         var instance = this;
-        
-        var viewsToDisplay = imagesToDisplay.map(getImageView.bind(this));
-                
-        this.removeOrphanImages(imagesToDisplay);
         
         var gallerySize;
         
@@ -126,8 +124,16 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
                 width: 0,
                 height: 0
             }
+        }
+        if (gallerySize.width === 0 || gallerySize.height === 0) {
+            // avoid compute errors
             return;
         }
+        
+        var viewsToDisplay = imagesToDisplay.map(getImageView.bind(this));
+                
+        this.removeOrphanImages(imagesToDisplay);
+        
         var gridAndTileSizePromise = new Promise(function(resolve, reject) {
             try{
             var gridSize;
@@ -137,6 +143,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
                 Promise.all(viewsToDisplay.map(function(imageView) {
                     return imageView.getFullSizePromise();
                 })).then(function(fullImageSizes) {
+                    try{
                     // stretch
                     gridSize = getGridSize(gallerySize, fullImageSizes);
                     tileSize = getTileSize(gallerySize, gridSize);
@@ -144,6 +151,9 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
                         gridSize: gridSize,
                         tileSize: tileSize
                     });
+                    } catch (e) {
+                        Logger.log(e);
+                    }
                 });
             }
             else {
@@ -193,7 +203,9 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             viewsToDisplay.forEach(function(imageView) {
                 imageView.setSize(tileSize);
             });
-
+            if (instance.id === 1) {
+                debugger;
+            }
             var isRedrawRequired = !isSame(this.oldDisplaySettings, displaySettings);
             if (!isRedrawRequired) {
                 Logger.log("gallery view. render unnecessary");
@@ -327,7 +339,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
                     var imageSize = getStretchedSize(size, tileSize);
                     usedSize += imageSize.width * imageSize.height;
                 });
-                Logger.log(gridWidth + " " + gridHeight + " " + usedSize);
+                Logger.log("griddimensions (width, height, usedsize", gridWidth + " " + gridHeight + " " + usedSize);
                 if (!maxUsedSize || usedSize > maxUsedSize) {
                     bestGridSize = gridSize;
                     maxUsedSize = usedSize;
@@ -349,6 +361,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
     
     // returns the size of the image stretched to fit within some bounds
     function getStretchedSize(size, tileSize) {
+        Logger.log("getStretchedSize ", JSON.stringify(size), JSON.stringify(tileSize));
         var imageRatio = size.width / size.height;
         // fit width
         var imageSize = {

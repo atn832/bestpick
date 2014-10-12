@@ -19,7 +19,7 @@ define(["logger", "image", "backbone"], function(Logger, Image) {
             this.set("favoriteImages", favoriteImages);
             
             images.on("all", function(event, object) {
-//                Logger.log("g images", event);
+                // Logger.log("g images", event);
                 this.trigger(event + ":images", object);
             }.bind(this));
             selectedImages.on("all", function(event, object) {
