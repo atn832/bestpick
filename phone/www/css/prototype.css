@@ -44,7 +44,7 @@ svg {
 }
 
 .tile {
-    stroke: gray;
+    stroke: lightgray;
     fill: none;
 }
 
@@ -60,6 +60,7 @@ body .gallery .focus {
 .gallery .selected {
     stroke: #086fa1;
     stroke-width: 5;
+    fill: rgba(8, 70, 200, .2);
 }
 
 .gallery .favorite {

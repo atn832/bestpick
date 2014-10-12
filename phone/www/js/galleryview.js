@@ -73,9 +73,6 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         * Removes images that have been deleted or should not be displayed from the cache and the DOM
         */
         removeOrphanImages: function(imagesToDisplay) {
-            if (this.id === 1) {
-                debugger;
-            }
             var allImages = this.getAllGalleryImages();
             var imageViewsToRemove = [];
             for (var cid in this.imageViews) {
@@ -97,7 +94,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
     });
 
     function render() {
-        Logger.log("gallery view render");
+        // Logger.log("gallery view render");
         var currentRenderCount = ++renderCount;
 
         var el = this.el;
@@ -110,7 +107,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         var allGalleryImages = this.getAllGalleryImages();
         var imagesToDisplay = showSelected?
             this.getSelectedGalleryImages() : allGalleryImages;
-        Logger.log(imagesToDisplay.length, " to display", this.id);
+        // Logger.log(imagesToDisplay.length, " to display", this.id);
         var instance = this;
         
         var gallerySize;
@@ -230,9 +227,6 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             }
             viewsToDisplay.forEach(function(imageView, index) {
                 if (imageView.el.parentElement !== this.svg) {
-                    if (instance.id === 1) {
-                        debugger;
-                    }
                     this.svg.appendChild(imageView.el);
                 }
 
@@ -326,7 +320,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
     }
     
     function getGridSize(gallerySize, imageSizes) {
-        Logger.log("getGridSize " + JSON.stringify(gallerySize) + " " + JSON.stringify(imageSizes));
+        // Logger.log("getGridSize " + JSON.stringify(gallerySize) + " " + JSON.stringify(imageSizes));
         var maxUsedSize;
         var usedSize;
         

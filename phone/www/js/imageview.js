@@ -87,7 +87,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                 function getMetadata(resolve, reject) {
                     instance.getFullImagePromise().then(function(fullImage) {
                         try{
-                        Logger.log("metadata promise");
+                        // Logger.log("metadata promise");
                         var metadata = new ImageMetadata();
                         metadata.set(ImageMetadata.Keys.FullSize, {
                             width: fullImage.width,
@@ -119,7 +119,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             // we don't need the result.
             // just make sure the next thumbnail generation is done after the previous one is done
             this.metadataPromise.then(function(metadata) {
-                Logger.log("metadatapromise done, ready for thumbnail");
+                // Logger.log("metadatapromise done, ready for thumbnail");
                 var thumbnailURI = metadata.get(ImageMetadata.Keys.ThumbnailURI);
                 instance.image.setAttributeNS('http://www.w3.org/1999/xlink','href', thumbnailURI);
             });
@@ -132,7 +132,9 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             var image = this.model;
             if (image) {
                 this.tileBorder.classList.add("tile");
-                this.tileBorder.classList.toggle("selected", image.get("isSelected"));
+                if (!this.isThumbnailUpdateEnabled()) {
+                    this.tileBorder.classList.toggle("selected", image.get("isSelected"));
+                }
                 this.tileBorder.classList.toggle("favorite", image.get("isFavorite"));
                 
                 // from http://www.eccesignum.org/blog/solving-display-refreshredrawrepaint-issues-in-webkit-browsers
@@ -278,10 +280,10 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                         resolve(fullImage);
                     };
                     var url = image.get("url");
-                    Logger.log(this.id, "setting fullimage on img", url);
+                    // Logger.log(this.id, "setting fullimage on img", url);
                     var uri = FileSystem.getInstance().getDataURI(url);
                     uri.then(function(uri) {
-                        Logger.log("setting fullimage", url);
+                        // Logger.log("setting fullimage", url);
                         fullImage.src = uri;
                     });
                 }
@@ -307,7 +309,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
     * @param cover if false, will do contain instead
     **/
     function resizeImage(srcImageObject, width, height, cover) {
-        Logger.log("resizeImage, cover" + cover + "," + width + "," + height);
+        // Logger.log("resizeImage, cover" + cover + "," + width + "," + height);
         var newWidth = width;
         var newHeight = height;
     

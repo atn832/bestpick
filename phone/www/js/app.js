@@ -45,19 +45,19 @@ function initialize(Logger) {
         showPage(Page.Compare);
     });
     
-    // deleteBtn = document.getElementById(deleteBtnID);
-    // deleteBtn.addEventListener("click", function() {
-    //     var selectedImages = gallery.get("selectedImages");
-    //     gallery.get("images").remove(selectedImages);
-    //     requirejs(["filesystem"], function(FileSystem) {
-    //         selectedImages.forEach(function(image) {
-    //             var url = image.get("url");
-    //             FileSystem.getInstance().remove(url);
-    //         });
-    //     });
-    //     resetFlag(gallery.get("selectedImages"), "isSelected");
-    //     // galleryView.render();
-    // });
+    deleteBtn = document.getElementById(deleteBtnID);
+    deleteBtn.addEventListener("click", function() {
+        var selectedImages = gallery.get("selectedImages").slice();
+        gallery.get("images").remove(selectedImages);
+        requirejs(["filesystem"], function(FileSystem) {
+            selectedImages.forEach(function(image) {
+                var url = image.get("url");
+                FileSystem.getInstance().remove(url);
+            });
+            resetFlag(gallery.get("selectedImages"), "isSelected");
+            galleryView.render();
+        });
+    });
 
     keepBtn = document.getElementById(keepBtnID);
     keepBtn.addEventListener("click", function() {
@@ -292,6 +292,8 @@ function updateButtons() {
         disabled = selectedImages.length == 0
         compareBtn.disabled = disabled;
         $(compareBtn).parent().toggleClass("disabled", disabled);
+        deleteBtn.disabled = disabled;
+        $(deleteBtn).parent().toggleClass("disabled", disabled);
     }
     else {
         var favoriteImages = gallery.get("favoriteImages");
