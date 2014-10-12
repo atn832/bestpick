@@ -8,33 +8,84 @@
         <link rel="stylesheet" href="css/prototype.css">
         <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
         <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
+        <script src="bower_components/jquery/dist/jquery.min.js"></script>
+        <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
         <script src="bower_components/hammerjs/hammer.min.js"></script>
         <script src="node_modules/requirejs/require.js"></script>
         <script src="js/main.js"></script>
         <script src="js/app.js"></script>
     </head>
-    <body class="fx fx-c">
-        <nav id="toolbar" class="fx-n bgc-lg pos-r">
-            <button type="button" id="btnCompare" class="btn btn-default fl-end">
-                <h3 class="m-0"><span class="glyphicon glyphicon-th-large"></span></h3>
-                <div>Compare</div>
-            </button>
-            <button type="button" id="btnBack" class="btn btn-default d-n">
-                <h3 class="m-0"><span class="glyphicon glyphicon-chevron-left"></span></h3>
-                <div>Back</div>
-            </button>
-            <button type="button" id="btnKeep" class="btn btn-default d-n fl-end">
-                <h3 class="m-0"><span class="glyphicon glyphicon-star"></span></h3>
-                <div>Keep</div>
-            </button>
-        </nav>
-        <span id="status" class="debug fx-n"></span>
-        <div id="container" class="fx-g-1 pos-r ov-y-a"></div>
-        <nav class="pos-r" style="height:70px;">
-            <span class="bgc-g pos-r w-100 h-100 btn btn-default">
-                <div class="pos-a va-c ta-c w-100 start-0"><h3 class="m-0">Drop zone</h3></div>
-                <input type="file" value="Open Folder" id="dirdrop" nwdirectory class="pos-a start-0 t-0 w-100 h-100 op-0" />
-            </span>
-        </nav>
+    <body>
+        <div id="carousel-example-generic" class="carousel slide h-100" data-ride="carousel" data-interval="false">
+            <div class="carousel-inner h-100">
+                <div class="item active h-100">
+                    <div class="fx fx-c h-100">
+                        <nav id="toolbar" class="navbar navbar-default fx-n bgc-lg pos-r" role="navigation">
+                            <ul class="nav navbar-nav w-100 fx fx-r">
+                                <li class="active"><a href="#"><span class="glyphicon glyphicon-chevron-left"></span></a></li>
+                                <li class="fx-g-1"><h3 class="ta-c va-c pos-a w-100 m-0">Drag pictures to the drop zone</h3></li>
+            <a class="right carousel-control" href="#carousel-example-generic" role="button" data-slide="next">hello</a>
+                            </ul>    
+                        </nav>
+                        <div class="fx-g-1 pos-r bgc-dg">
+                            <div class="pos-a va-c ta-c w-100 start-0"><h3 class="m-0">Drop zone</h3></div>
+                            <input type="file" value="Open Folder" id="dirdrop" nwdirectory class="pos-a start-0 t-0 w-100 h-100 op-0" />
+                        </div>
+                        <nav id="toolbar" class="navbar navbar-default navbar-fixed-bottom fx-n bgc-lg pos-r" role="navigation" style="position: relative; /* cancel navbar-fixed-bottom's position fixed */">
+                            <ul class="nav navbar-nav navbar-right ta-c" style="margin-right: 0; /* cancel navbar-right's negative margin-right */">
+                                <li>
+                                    <a href="#" id="btnDelete">
+                                        <h3 class="m-0"><span class="glyphicon glyphicon-trash"></span></h3>
+                                        <div>Delete</div>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" id="btnCompare">
+                                        <h3 class="m-0"><span class="glyphicon glyphicon-th-large"></span></h3>
+                                        <div>Compare</div>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" id="btnKeep">
+                                        <h3 class="m-0"><span class="glyphicon glyphicon-star"></span></h3>
+                                        <div>Keep</div>
+                                    </a>
+                                </li>
+
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+                <div class="item h-100">
+                    <div class="fx fx-c h-100">
+                        <nav id="toolbar" class="fx-n bgc-lg pos-r">
+                            <button type="button" id="btnCompare" class="btn btn-default fl-end">
+                                <h3 class="m-0"><span class="glyphicon glyphicon-th-large"></span></h3>
+                                <div>Compare</div>
+                            </button>
+                            <button type="button" id="btnBack" class="btn btn-default d-n">
+                                <h3 class="m-0"><span class="glyphicon glyphicon-chevron-left"></span></h3>
+                                <div>Back</div>
+                            </button>
+                            <button type="button" id="btnKeep" class="btn btn-default d-n fl-end">
+                                <h3 class="m-0"><span class="glyphicon glyphicon-star"></span></h3>
+                                <div>Keep</div>
+                            </button>
+                        </nav>
+                        <span id="status" class="debug fx-n"></span>
+                        <div id="container" class="fx-g-1 pos-r ov-y-a"></div>
+                        <nav class="pos-r" style="height:70px;">
+                            <span class="bgc-g pos-r w-100 h-100 btn btn-default">
+                                <div class="pos-a va-c ta-c w-100 start-0"><h3 class="m-0">Drop zone</h3></div>
+                                <input type="file" value="Open Folder" id="dirdrop" nwdirectory class="pos-a start-0 t-0 w-100 h-100 op-0" />
+                            </span>
+                        </nav>
+                    </div>
+                </div>
+                <div class="item h-100">
+                    page3
+                </div>
+            </div>
+        </div>
     </body>
 </html>

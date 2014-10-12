@@ -23,7 +23,8 @@ function initialize(Logger) {
         dirdrop.addEventListener("change", function(evt) {
             var dir = dirdrop.value
             Logger.log(dirdrop.value);
-            requirejs(["filesystem"], function(FileSystem) {
+            requirejs(["filesystem", "bootstrap"], function(FileSystem) {
+                $('.carousel').carousel("next");
                 var images = FileSystem.getInstance().getDir(dirdrop.value);
                 gallery.get("images").set(images);
                 galleryView.render();
