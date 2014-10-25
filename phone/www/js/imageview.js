@@ -72,6 +72,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             */
             var image = this.model;
             this.image.model = image;
+            this.tileBorder.model = image;
             this.fullResolutionImage.model = image;
             this.tileBackground.model = image;
             this.image.view = this;
