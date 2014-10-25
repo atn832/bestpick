@@ -2,11 +2,11 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
     var TileSpacing = 2;
     var StandardTileSize = 100;
     var id = 0;
-    var renderCount = 0;
     var GalleryView = Backbone.View.extend({
         tagName: "div",
         className: "gallery",
         initialize: function() {
+            this.renderCount = 0;
             this.id = id++;
             Logger.log("gv init, model:", this.model);
            this.model.on("all", function(event) {
@@ -94,8 +94,8 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
     });
 
     function render() {
-        // Logger.log("gallery view render");
-        var currentRenderCount = ++renderCount;
+         Logger.log("gallery view render");
+        var currentRenderCount = ++this.renderCount;
 
         var el = this.el;
         el.classList.toggle("d-n", !this.visible);
@@ -193,8 +193,8 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         });
         gridAndTileSizePromise.then(function(result) {
             // for some racing issues, we may be trying to render an old state
-            if (currentRenderCount < renderCount) {
-                // Logger.log("aborted render, " + currentRenderCount + " vs " + renderCount)
+            if (currentRenderCount < this.renderCount) {
+                 Logger.log("aborted render, " + currentRenderCount + " vs " + this.renderCount)
                 return;
             }
 			try{
