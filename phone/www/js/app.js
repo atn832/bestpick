@@ -31,12 +31,7 @@ function initialize(Logger) {
         dirdrop.addEventListener("change", function(evt) {
             var dir = dirdrop.value
             Logger.log(dirdrop.value);
-            requirejs(["filesystem", "bootstrap"], function(FileSystem) {
-                $(".carousel").carousel("next");
-                var images = FileSystem.getInstance().getDir(dirdrop.value);
-                gallery.get("images").set(images);
-                galleryView.render();
-            });
+            openFolder(dirdrop.value);
         });
     }
     
@@ -257,14 +252,18 @@ function initialize(Logger) {
         });
         updateButtons();
         
-//        hardCodedTest();
+        // hardCodedTest();
     });
 }
 
 function hardCodedTest() {
-//    gallery.get("images").at(0).set("isSelected", true);
-//    gallery.get("images").at(1).set("isSelected", true);
-//    gallery.get("images").at(0).set("isFavorite", true);
+    openFolder("test");
+    setTimeout(function() {
+        requirejs(["logger"], function(Logger) {
+            Logger.log("document.body.innerHTML");
+            Logger.log(document.body.innerHTML);
+        });
+    }, 000);
 }
 
 function showPage(page) {
@@ -307,5 +306,14 @@ function resetFlag(collection, flagname) {
     var items = collection.slice();
     items.forEach(function(item) {
         item.set(flagname, false);
+    });
+}
+
+function openFolder(path) {
+    requirejs(["filesystem", "bootstrap"], function(FileSystem) {
+        $(".carousel").carousel("next");
+        var images = FileSystem.getInstance().getDir(path);
+        gallery.get("images").set(images);
+        galleryView.render();
     });
 }

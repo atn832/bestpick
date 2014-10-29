@@ -35,7 +35,7 @@ input:last-of-type {
 
 svg {
     /* Solves the 1px vertical scrollbar issue */
-    position: absolute;
+/*    position: absolute;*/
 }
 
 /* Image View style */
