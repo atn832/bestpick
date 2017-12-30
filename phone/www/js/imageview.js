@@ -1,8 +1,9 @@
 /**
 * Implementation of an ImageView. It displays an Image whose url is assumed to be static (for simplicity)
 **/
-define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "transformation", "rectangle", "svg", "imagemetadata", "backbone"], function(Logger, Util, Promise, ImageProcessor, Job, FileSystem, Transformation, Rectangle, SVG, ImageMetadata) {
+define(["logger", "util", "imageprocessor", "job", "filesystem", "transformation", "rectangle", "svg", "imagemetadata", "backbone"], function(Logger, Util, ImageProcessor, Job, FileSystem, Transformation, Rectangle, SVG, ImageMetadata) {
     const sharp = require('sharp');
+    const OneTransparentPixel = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw== ";
 
     var fullResolutionGenerationTimeout = 500;
     var BigThumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
@@ -236,7 +237,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                 this.currentJob = null;
             }
             // clear full resolution image (using a small transparent image)
-            this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw== ");
+            this.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', OneTransparentPixel);
 
             this.timer = setTimeout(
                 function() {
@@ -256,7 +257,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                         f: generateSubtile
                     });
                     function generateSubtile(resolve, reject) {
-                        console.log("generate subtile");
+                        Logger.log("Generate subtile");
                         Promise.all([instance.getFullImagePromise(), instance.getFullSizePromise(), instance.getFullImageBufferPromise()]).then(async function(results) {
                             var fullImage = results[0];
                             var fullSize = results[1];
@@ -264,13 +265,17 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                             var fit = Transformation.getFitMatrix(fullSize, instance.getSize());
                             var modelToDevice = m.multiply(fit);
 
-                            var thumbnailURI = await getSubImage(buffer, fullSize, instance.getSize(), modelToDevice);
-                            // only update the image if no new job has taken over this one
-                            if (instance.currentJob === newJob) {
-                                instance.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
-                                instance.currentJob = null;
+                            try {
+                                var thumbnailURI = await getSubImage(buffer, fullSize, instance.getSize(), modelToDevice);
+                                // only update the image if no new job has taken over this one
+                                if (instance.currentJob === newJob) {
+                                    instance.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
+                                    instance.currentJob = null;
+                                }
+                                resolve();
+                            } catch(e) {
+                              Logger.log("Error generating subtile:" + e);
                             }
-                            resolve();
                         });
                     }
                     newJob.set("f", generateSubtile);
@@ -399,6 +404,11 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
         var destRect = Rectangle.getIntersection(devImageRect, thumbnailRect);
         var sourceRect = Rectangle.getIntegerRectangle(Transformation.transform(destRect, matrix.inverse()), fullSize);
         destRect = Rectangle.getIntegerRectangle(destRect, thumbnailRect);
+        Logger.log("dest rect: " + JSON.stringify(destRect));
+        Logger.log("source rect: " + JSON.stringify(sourceRect));
+        if (destRect.width == 0 || destRect.height == 0) {
+          return OneTransparentPixel;
+        }
         try {
             const extractRect = {
                 top: sourceRect.y,

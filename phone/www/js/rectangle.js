@@ -19,8 +19,8 @@ define(["logger"], function(Logger) {
     function getIntegerRectangle(r, bounds) {
         const x = Math.max(0, Math.round(r.x));
         const y = Math.max(0, Math.round(r.y));
-        const width = Math.min(Math.max(0, Math.round(r.width)), bounds.width - x);
-        const height = Math.min(Math.max(0, Math.round(r.height)), bounds.height - y);
+        const width = Math.max(0, Math.min(Math.round(r.width), bounds.width - x));
+        const height = Math.max(0, Math.min(Math.round(r.height), bounds.height - y));
         Logger.log(JSON.stringify(r));
         const result = createRectangle(
           x,
@@ -41,8 +41,6 @@ define(["logger"], function(Logger) {
         }
         r.width = Math.max(0, Math.min(getRight(r1), getRight(r2)) - r.x);
         r.height = Math.max(0, Math.min(getBottom(r1), getBottom(r2)) - r.y);
-        if (r.width === 0 || r.height === 0)
-            return null;
         return r;
     }
 
