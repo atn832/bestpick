@@ -1,4 +1,4 @@
-define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg", "backbone"], function(Logger, Promise, Gallery, ImageView, GalleryViewSettings, SVG) {
+define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbone"], function(Logger, Gallery, ImageView, GalleryViewSettings, SVG) {
     var TileSpacing = 2;
     var StandardTileSize = 100;
     var id = 0;

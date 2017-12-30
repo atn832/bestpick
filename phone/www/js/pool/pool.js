@@ -1,4 +1,4 @@
-define(["logger", "promise"], function(Logger, Promise) {
+define(["logger"], function(Logger) {
     function Pool() {
     };
     

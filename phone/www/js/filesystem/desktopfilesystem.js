@@ -1,4 +1,4 @@
-define(["logger", "image", "promise"], function(Logger, Image, Promise) {
+define(["logger", "image"], function(Logger, Image) {
     var DefaultPath = ".";
 
     String.prototype.endsWith = function(suffix) {

@@ -11,7 +11,6 @@ requirejs.config({
         testfilesystem: "filesystem/testfilesystem",
         desktopfilesystem: "filesystem/desktopfilesystem",
         mobilefilesystem: "filesystem/mobilefilesystem",
-        promise: "promise-3.2.0", // necessary for webkit on MacOS
         pool: "pool/pool",
         variablepriorityqueue: "pool/variablepriorityqueue",
         job: "pool/job"

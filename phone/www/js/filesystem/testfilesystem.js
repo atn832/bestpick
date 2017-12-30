@@ -1,4 +1,4 @@
-define(["logger", "promise", "image"], function(Logger, Promise, Image) {
+define(["logger", "image"], function(Logger, Image) {
     var files = [
         "img/SAM_1615.JPG",
         "img/SAM_1616.JPG",
