@@ -34,12 +34,12 @@ function initialize(Logger) {
             openFolder(dirdrop.value);
         });
     }
-    
+
     compareBtn = document.getElementById(compareBtnID);
     compareBtn.addEventListener("click", function() {
         showPage(Page.Compare);
     });
-    
+
     deleteBtn = document.getElementById(deleteBtnID);
     deleteBtn.addEventListener("click", function() {
         var selectedImages = gallery.get("selectedImages").slice();
@@ -76,11 +76,13 @@ function initialize(Logger) {
         // two-way setting of these is not implemented
 //        gallery.get("selectedImages").reset();
 //        gallery.get("favoriteImages").reset();
-        resetFlag(gallery.get("selectedImages"), "isSelected");
         resetFlag(gallery.get("favoriteImages"), "isFavorite");
-        showPage(Page.Select);
+        if (selectedImages.length == 1) {
+          resetFlag(gallery.get("selectedImages"), "isSelected");
+          showPage(Page.Select);
+        }
     });
-    
+
     cancelCompareBtn = document.getElementById(cancelCompareBtnID);
     cancelCompareBtn.addEventListener("click", function() {
         // reset favorites
@@ -99,7 +101,7 @@ function initialize(Logger) {
         gallery = g;
         // var dir = FileSystem.getInstance().getDir();
         // g.get("images").add(dir);
-        
+
         // display images
         var gv = new GalleryView({
             model: g,
@@ -113,18 +115,18 @@ function initialize(Logger) {
             attributes: {showSelected: true}
         });
         compareGalleryView = cgv;
-        
+
         container.appendChild(gv.el);
         compareContainer.appendChild(cgv.el);
         // todo: make gv listen to events so it can rerender
         // itself when added to a new parent
         gv.render();
-        
+
         var prevSelectedImageIndexStart;
         var prevSelectedImageIndexEnd;
         // put listeners on to images:
         // if touch on it, toggle
-        
+
         function handleTap(event) {
             var shiftKey = event.gesture.touches[0].shiftKey;
             var el = event.target;
@@ -171,17 +173,17 @@ function initialize(Logger) {
         }
         Hammer(gv.el, {prevent_default: true}).on("tap", handleTap);
         Hammer(cgv.el, {prevent_default: true}).on("tap", handleTap);
-        
+
         var lastPinchScale;
-        
+
         Hammer(cgv.el, {prevent_default:true}).on("transformstart", function(event) {
             lastPinchScale = event.gesture.scale;
         });
-        
+
         Hammer(cgv.el, {prevent_default:true}).on("pinch", function(event) {
             var newScale = event.gesture.scale;
 //            Logger.log("pinch " + newScale);
-            
+
             var relScale = newScale / lastPinchScale;
             lastPinchScale = newScale;
             var gestureCenter = event.gesture.center;
@@ -197,11 +199,11 @@ function initialize(Logger) {
         });
 
         var lastDragCenter;
-        
+
         Hammer(cgv.el, {prevent_default:true}).on("dragstart", function(event) {
             lastDragCenter = event.gesture.center;
         });
-        
+
         Hammer(cgv.el, {prevent_default:true}).on("drag", function(event) {
             var newCenter = event.gesture.center;
             var dx = newCenter.pageX - lastDragCenter.pageX;
@@ -210,7 +212,7 @@ function initialize(Logger) {
 //            Logger.log("drag " + dx + " " + dy);
             lastDragCenter = newCenter;
         });
-        
+
         $(cgv.el).on('mousewheel', function(event) {
             var gestureCenter = event;
             var center;
@@ -224,7 +226,7 @@ function initialize(Logger) {
                 factor = 1 / factor;
             cgv.zoom(factor, center);
         });
-        
+
         /**
         * Returns the position relative to an image view's top left corner.
         * target has to be part of the ImageView
@@ -233,7 +235,7 @@ function initialize(Logger) {
             var model = target.model;
             if (!(model instanceof Image))
                 throw "target is not part of an ImageView";
-            
+
             var imageView = target.view;
             // warning: getBoundingClientRect is implemented by our own view
             // do not call it on imageView.el
@@ -242,7 +244,7 @@ function initialize(Logger) {
             var cy = pageY - bounds.top;
             return {x: cx, y: cy};
         }
-        
+
         // listener to selected images
         g.on("add:selectedImages remove:selectedImages reset:selectedImages", function() {
             updateButtons();
@@ -251,7 +253,7 @@ function initialize(Logger) {
             updateButtons();
         });
         updateButtons();
-        
+
         // hardCodedTest();
     });
 }
