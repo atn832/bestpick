@@ -6,18 +6,18 @@ A cross platform application to pick the best pictures in your albums
 Requirements
 ============
 1.  Install Node.js
-1.  Install Grunt globally: `npm install -g grunt-cli`
-2.  Install Bower globally: `npm install -g bower`
-3.  From phone/www, run `bower install` and `npm install`. This will install the project's Javascript dependencies
+2.  Install Grunt globally: `npm install -g grunt-cli`
+3.  Install Bower globally: `npm install -g bower`
+4.  From phone/www, run `bower install` and `npm install`. This will install the project's Javascript dependencies
+5.  Install [NW.js](https://nwjs.io/)
 
 How to test on PC
 =================
-1.  From the root folder, run `npm install`. This will install node webkit.
-2.  run `npm start`
+1.  From the `phone/www` folder, run `~/Downloads/nwjs-sdk-v0.27.3-osx-x64/nwjs.app/Contents/MacOS/nwjs .` (Mac)
 
 How to build for PC or Mac
 ==========================
-1.  run `grunt`. The build binaries will be in webkitbuilds/releases.
+1.  See http://docs.nwjs.io/en/latest/For%20Users/Package%20and%20Distribute/#package-option-2-zip-file
 
 How to test on Android
 ======================
