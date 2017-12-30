@@ -9,5 +9,8 @@
     },
     "devDependencies": {
         "requirejs": ">=2.1.11"
+    },
+    "dependencies": {
+        "sharp": "^0.18.4"
     }
 }

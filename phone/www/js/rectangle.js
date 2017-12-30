@@ -1,4 +1,4 @@
-define(function() {
+define(["logger"], function(Logger) {
     function createRectangle(x, y, width, height) {
         return {
             x: x,
@@ -7,15 +7,30 @@ define(function() {
             height: height
         };
     }
-    
+
     function getRight(r) {
         return r.x + r.width;
     }
-    
+
     function getBottom(r) {
         return r.y + r.height;
     }
-    
+
+    function getIntegerRectangle(r, bounds) {
+        const x = Math.max(0, Math.round(r.x));
+        const y = Math.max(0, Math.round(r.y));
+        const width = Math.min(Math.max(0, Math.round(r.width)), bounds.width - x);
+        const height = Math.min(Math.max(0, Math.round(r.height)), bounds.height - y);
+        Logger.log(JSON.stringify(r));
+        const result = createRectangle(
+          x,
+          y,
+          width,
+          height);
+        Logger.log(JSON.stringify(result));
+        return result;
+    }
+
     /**
     * Intersects two rectangles
     **/
@@ -30,9 +45,10 @@ define(function() {
             return null;
         return r;
     }
-    
+
     return {
         getIntersection: getIntersection,
+        getIntegerRectangle: getIntegerRectangle,
         getRight: getRight,
         getBottom: getBottom,
         createRectangle: createRectangle

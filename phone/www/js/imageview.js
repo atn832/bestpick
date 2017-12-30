@@ -2,6 +2,8 @@
 * Implementation of an ImageView. It displays an Image whose url is assumed to be static (for simplicity)
 **/
 define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "transformation", "rectangle", "svg", "imagemetadata", "backbone"], function(Logger, Util, Promise, ImageProcessor, Job, FileSystem, Transformation, Rectangle, SVG, ImageMetadata) {
+    const sharp = require('sharp');
+
     var fullResolutionGenerationTimeout = 500;
     var BigThumbnailPixelSize = 500; // ideally this could be dynamically computed depending on the device's capabilities
     var SmallThumbnailPixelSize = 100; // ideally this could be dynamically computed depending on the device's capabilities
@@ -16,7 +18,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
 //                Logger.log("iv model changed", event);
                 this.render();
             }.bind(this));
-            
+
             if (this.attributes && this.attributes.thumbnailUpdateEnabled) {
                 this.setThumbnailUpdateEnabled(true);
             }
@@ -35,22 +37,22 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                     <rect> <-- border
                 </g>
             */
-            
+
             var instance = this;
             this.el = document.createElementNS("http://www.w3.org/2000/svg", "g");
             this.g = document.createElementNS("http://www.w3.org/2000/svg", "g");
             this.clipPath = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
             this.clipID = _.uniqueId("clip");
             this.clipPath.setAttribute("id", this.clipID);
-            
+
             this.clipRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            
+
             this.tileBackground = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             this.tileBackground.setAttribute("class", "background");
-            
+
             this.tileBorder = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             this.tileBorder.setAttribute("clip-path", "url(#" + this.clipID + ")");
-            
+
             this.image = document.createElementNS("http://www.w3.org/2000/svg", "image");
             this.fullResolutionImage = document.createElementNS("http://www.w3.org/2000/svg", "image");
             this.g.setAttribute("clip-path", "url(#" + this.clipID + ")");
@@ -62,10 +64,10 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             this.el.appendChild(this.fullResolutionImage);
             this.el.appendChild(this.tileBorder);
             this.transformation = "";
-            
+
             // image contains some lower resolution image
             // fullResolutionImage contains the full resolution piece of picture
-            
+
             /*
             * Set up attributes for interaction.
             * a user click will intersect either the tile or the image
@@ -78,32 +80,37 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             this.image.view = this;
             this.fullResolutionImage.view = this;
             this.tileBackground.view = this;
-            
+
             this.width = 0;
             this.height = 0;
-            
+
             var instance = this;
             this.metadataPromise = new Promise(function(resolveMain, reject) {
                 Logger.log("enqueuing job: metadata request");
                 function getMetadata(resolve, reject) {
-                    instance.getFullImagePromise().then(function(fullImage) {
+                  try{
+                    instance.getFullImageBufferPromise()
+                    .then(async fullImageBuffer => {
+                        const imgmetadata = await getImageMetadata(fullImageBuffer);
                         try{
-                        // Logger.log("metadata promise");
-                        var metadata = new ImageMetadata();
-                        metadata.set(ImageMetadata.Keys.FullSize, {
-                            width: fullImage.width,
-                            height: fullImage.height
-                        });
-                        var cover = !instance.isThumbnailUpdateEnabled();
-                        var size = instance.getThumbnailSize();
-                        var thumbnailURI = resizeImage(fullImage, size.width, size.height, cover);
-                        metadata.set(ImageMetadata.Keys.ThumbnailURI, thumbnailURI);
-                        resolveMain(metadata);
-                        resolve();
+                            var metadata = new ImageMetadata();
+                            metadata.set(ImageMetadata.Keys.FullSize, {
+                                width: imgmetadata.width,
+                                height: imgmetadata.height
+                            });
+                            var cover = !instance.isThumbnailUpdateEnabled();
+                            var size = instance.getThumbnailSize();
+                            var thumbnailURI = await resizeImage(fullImageBuffer, imgmetadata, size.width, size.height, cover);
+                            metadata.set(ImageMetadata.Keys.ThumbnailURI, thumbnailURI);
+                            resolveMain(metadata);
+                            resolve();
                         } catch (e) {
                             Logger.log(e);
                         }
-                    }, Util.onRejected);
+                    });
+                  } catch(e) {
+                      Logger.log(e);;
+                  }
                 }
                 try {
                     ImageProcessor.getInstance().getQueue().enqueue(new Job({
@@ -115,7 +122,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                     Logger.log("exception enqueuing metadata request", e);
                 }
             });
-            
+
             // Set up fixed resolution image
             // we don't need the result.
             // just make sure the next thumbnail generation is done after the previous one is done
@@ -126,7 +133,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             });
 
             this.setVisible(true);
-            
+
             this.render();
         },
         render: function() {
@@ -134,10 +141,10 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             if (image) {
                 this.tileBorder.classList.add("tile");
                 if (!this.isThumbnailUpdateEnabled()) {
-                    this.tileBorder.classList.toggle("selected", image.get("isSelected"));
+                    this.tileBorder.classList.toggle("selected", image.get("isSelected") === true);
                 }
-                this.tileBorder.classList.toggle("favorite", image.get("isFavorite"));
-                
+                this.tileBorder.classList.toggle("favorite", image.get("isFavorite") === true);
+
                 // from http://www.eccesignum.org/blog/solving-display-refreshredrawrepaint-issues-in-webkit-browsers
                 this.tileBorder.style.display='none';
                 this.tileBorder.offsetHeight; // no need to store this anywhere, the reference is enough
@@ -169,7 +176,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                 this.size.width === size.width &&
                 this.size.height === size.height)
                 return;
-            
+
             this.size = size;
             this.image.setAttribute("width", size.width);
             this.image.setAttribute("height", size.height);
@@ -181,7 +188,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             this.tileBorder.setAttribute("height", size.height);
             this.tileBackground.setAttribute("width", size.width);
             this.tileBackground.setAttribute("height", size.height);
-            
+
             this.requestThumbnailUpdate();
         },
         getTransformation: function() {
@@ -197,10 +204,10 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             if (!consolidatedTransform)
                 return;
             var m = consolidatedTransform.matrix;
-            
+
             var strmatrix = "matrix(" + m.a + ", " + m.c + ", " + m.b + ", " + m.d + ", " + m.e + ", " + m.f + ")";
             this.image.setAttribute("transform", strmatrix);
-            
+
             this.requestThumbnailUpdate();
         },
         getThumbnailSize: function() {
@@ -239,7 +246,7 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                     var m;
                     if (consolidatedTransform)
                         m = consolidatedTransform.matrix;
-                    else 
+                    else
                         m = SVG.SVGSVGElement.createSVGMatrix();
 
                     // no skewing, no rotation
@@ -250,13 +257,14 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                     });
                     function generateSubtile(resolve, reject) {
                         console.log("generate subtile");
-                        Promise.all([instance.getFullImagePromise(), instance.getFullSizePromise()]).then(function(results) {
+                        Promise.all([instance.getFullImagePromise(), instance.getFullSizePromise(), instance.getFullImageBufferPromise()]).then(async function(results) {
                             var fullImage = results[0];
                             var fullSize = results[1];
+                            var buffer = results[2];
                             var fit = Transformation.getFitMatrix(fullSize, instance.getSize());
                             var modelToDevice = m.multiply(fit);
 
-                            var thumbnailURI = getSubImage(fullImage, instance.getSize(), modelToDevice);
+                            var thumbnailURI = await getSubImage(buffer, fullSize, instance.getSize(), modelToDevice);
                             // only update the image if no new job has taken over this one
                             if (instance.currentJob === newJob) {
                                 instance.fullResolutionImage.setAttributeNS('http://www.w3.org/1999/xlink', 'href', thumbnailURI);
@@ -293,10 +301,26 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
                 }
             }.bind(this));
         },
+        getFullImageBufferPromise: function() {
+            return new Promise(function(resolve) {
+                try {
+                    var image = this.model;
+                    var url = image.get("url");
+                    // Logger.log(this.id, "setting fullimage on img", url);
+                    return FileSystem.getInstance().getData(url).then(e => {
+                      resolve(e);
+                    });
+                }
+                catch (e) {
+                  Logger.log(e);
+                    Logger.log(e);
+                }
+            }.bind(this));
+        },
         setVisible: function(isVisible) {
             if (this.visible === isVisible)
                 return;
-            
+
             this.visible = isVisible;
             this.render();
         },
@@ -304,81 +328,108 @@ define(["logger", "util", "promise", "imageprocessor", "job", "filesystem", "tra
             return this.visible;
         }
     });
-    
+
+    async function getImageMetadata(buffer) {
+      return sharp(buffer).metadata();
+    }
+
     /**
     * Resize an image and return the resized image's data URI
     * @param cover if false, will do contain instead
     **/
-    function resizeImage(srcImageObject, width, height, cover) {
-        // Logger.log("resizeImage, cover" + cover + "," + width + "," + height);
+    async function resizeImage(srcImageObject, fullSize, width, height, cover) {
         var newWidth = width;
         var newHeight = height;
-    
+
         // Calculate a new scale
         // The new scale will be the max of the two possible scales
-        
         var scale = cover?
-            Math.max(newWidth / srcImageObject.width, newHeight / srcImageObject.height) :
-            Math.min(newWidth / srcImageObject.width, newHeight / srcImageObject.height);
-        
+            Math.max(newWidth / fullSize.width, newHeight / fullSize.height) :
+            Math.min(newWidth / fullSize.width, newHeight / fullSize.height);
+
         // New canvas
         var dst_canvas = document.createElement('canvas');
+        var destWidth;
+        var destHeight;
         if (cover) {
-            dst_canvas.width = width;
-            dst_canvas.height = height;
+            destWidth = width;
+            destHeight = height;
         }
         else {
-            dst_canvas.width = scale * srcImageObject.width;
-            dst_canvas.height = scale * srcImageObject.height;
+            destWidth = scale * fullSize.width;
+            destHeight = scale * fullSize.height;
         }
-    
+
         // Draw Image content in canvas
-        var dst_ctx = dst_canvas.getContext('2d');
         // Center the image if it is cropped:
         // translate by -(scaled size - output size) / 2
-        var dx = -(srcImageObject.width * scale - dst_canvas.width) / 2;
-        var dy = -(srcImageObject.height * scale - dst_canvas.height) / 2;
-        dst_ctx.drawImage(srcImageObject, dx, dy, srcImageObject.width * scale, srcImageObject.height * scale);
+        var dx = (fullSize.width * scale - destWidth) / 2;
+        var dy = (fullSize.height * scale - destHeight) / 2;
 
-        // Replace source of Image
-        return dst_canvas.toDataURL();
+        const area = {
+            top: Math.round(dy),
+            left: Math.round(dx),
+            width: Math.round(destWidth),
+            height: Math.round(destHeight)
+        };
+        return sharp(srcImageObject)
+            .resize(Math.round(scale * fullSize.width), Math.round(scale * fullSize.height))
+            .extract(area)
+            .toFormat('jpeg')
+            .toBuffer()
+            .then(buffer => toDataURI('jpeg', buffer))
+            .catch(e => {
+                Logger.log(e);
+            });
     }
-    
+
     /**
     * @param matrix matrix of the full transformation from src image size to device (ie it also contains fit transformation in it)
     **/
-    function getSubImage(srcImageObject, thumbnailSize, matrix) {
-        // New canvas
-        var dst_canvas = document.createElement('canvas');
-        dst_canvas.width = thumbnailSize.width;
-        dst_canvas.height = thumbnailSize.height;
-        
-        // full size
-        var fullSize = {
-            width: srcImageObject.width,
-            height: srcImageObject.height
-        };
-        
+    async function getSubImage(srcImageObject, fullSize, thumbnailSize, matrix) {
         var devImageRect = Transformation.transform(fullSize, matrix);
-        
+
         var thumbnailRect = {
             x: 0,
             y: 0,
             width: thumbnailSize.width,
             height: thumbnailSize.height
         };
+
         var destRect = Rectangle.getIntersection(devImageRect, thumbnailRect);
-        
-        var sourceRect = Transformation.transform(destRect, matrix.inverse());
-        // Draw Image content in canvas
-        var dst_ctx = dst_canvas.getContext('2d');
-        dst_ctx.drawImage(srcImageObject,
-                        sourceRect.x, sourceRect.y, sourceRect.width, sourceRect.height,    // source
-                        destRect.x, destRect.y, destRect.width, destRect.height);           // destination
-    
-        // Replace source of Image
-        return dst_canvas.toDataURL();
+        var sourceRect = Rectangle.getIntegerRectangle(Transformation.transform(destRect, matrix.inverse()), fullSize);
+        destRect = Rectangle.getIntegerRectangle(destRect, thumbnailRect);
+        try {
+            const extractRect = {
+                top: sourceRect.y,
+                left: sourceRect.x,
+                width: sourceRect.width,
+                height: sourceRect.height
+            };
+            return sharp(srcImageObject)
+                .extract(extractRect)
+                .resize(destRect.width, destRect.height)
+                .background({r: 255, g:255, b: 255, alpha: 1})
+                .extend({
+                    top: destRect.y,
+                    left: destRect.x,
+                    bottom: thumbnailSize.height - (destRect.y + destRect.height),
+                    right: thumbnailSize.width - (destRect.x + destRect.width)
+                })
+                .toFormat('jpeg')
+                .toBuffer()
+                .then(buffer => toDataURI('jpeg', buffer))
+                .catch(e => {
+                    Logger.log(e);
+                });
+        } catch(e) {
+            alert("cannot resize" + e)
+        }
     }
-    
+
+    function toDataURI(extension, buffer) {
+        return "data:image/" + extension + ";base64," + Buffer(buffer).toString('base64');
+    }
+
     return ImageView;
 });

@@ -15,7 +15,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
            }.bind(this));
             this.imageViews = {};
             this.visible = true;
-            
+
             this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             this.svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
             this.svg.setAttribute("version", "1.1");
@@ -30,7 +30,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             window.addEventListener("resize", function() {
                 window.requestAnimationFrame(render.bind(instance));
             });
-            
+
             if (this.model) {
                 this.render();
             }
@@ -99,9 +99,9 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
 
         var el = this.el;
         el.classList.toggle("d-n", !this.visible);
-        
+
         this.svg.setAttribute("width", "100%");
-        
+
         // iterate over images
         var showSelected = this.isShowSelected();
         var allGalleryImages = this.getAllGalleryImages();
@@ -109,9 +109,9 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             this.getSelectedGalleryImages() : allGalleryImages;
         // Logger.log(imagesToDisplay.length, " to display", this.id);
         var instance = this;
-        
+
         var gallerySize;
-        
+
         var parentNode = this.el.parentNode;
         if (parentNode) {
             var rect = this.el.parentNode.getBoundingClientRect();
@@ -130,11 +130,11 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             // avoid compute errors
             return;
         }
-        
+
         var viewsToDisplay = imagesToDisplay.map(getImageView.bind(this));
-                
+
         this.removeOrphanImages(imagesToDisplay);
-        
+
         var gridAndTileSizePromise = new Promise(function(resolve, reject) {
             try{
             var gridSize;
@@ -257,7 +257,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
 			}
         }.bind(this));
     }
-    
+
     /**
     * Scales all the displayed images
     * @param s the scale
@@ -280,7 +280,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
                          translateMinusC + " " + image.getTransformation());
         });
     }
-    
+
     function translate(dx, dy) {
         this.prepend("translate(" + dx + ", " + dy + ")");
     }
@@ -292,17 +292,17 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             image.setTransformation(transformation + " " + image.getTransformation());
         });
     }
-    
+
     function setTransformation(transformation) {
         this.getDisplayedImages().forEach(function(image) {
             image.setTransformation(transformation);
         });
     }
-    
+
     function resetTransformation() {
         this.setTransformation("");
     }
-    
+
     function getImageView(image) {
         var cid = image.cid;
         var imageView;
@@ -318,12 +318,12 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         imageView = this.imageViews[cid];
         return imageView;
     }
-    
+
     function getGridSize(gallerySize, imageSizes) {
         // Logger.log("getGridSize " + JSON.stringify(gallerySize) + " " + JSON.stringify(imageSizes));
         var maxUsedSize;
         var usedSize;
-        
+
         // default value is used only when no image is displayed
         var bestGridSize = {
             width: Number.POSITIVE_INFINITY,
@@ -336,7 +336,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
                     height: gridHeight
                 };
                 var tileSize = getTileSize(gallerySize, gridSize);
-                
+
                 // compute used size
                 usedSize = 0;
                 imageSizes.forEach(function(size) {
@@ -352,17 +352,17 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         }
         return bestGridSize;
     }
-    
+
     function getTileSize(bounds, gridSize) {
         var gridWidth = gridSize.width;
         var gridHeight = gridSize.height;
         var tileSize = {
-            width: (bounds.width - (gridWidth - 1) * TileSpacing) / gridWidth ,
-            height: (bounds.height - (gridHeight - 1) * TileSpacing) / gridHeight
+            width: Math.floor((bounds.width - (gridWidth - 1) * TileSpacing) / gridWidth) ,
+            height: Math.floor((bounds.height - (gridHeight - 1) * TileSpacing) / gridHeight)
         }
         return tileSize;
     }
-    
+
     // returns the size of the image stretched to fit within some bounds
     function getStretchedSize(size, tileSize) {
         // Logger.log("getStretchedSize ", JSON.stringify(size), JSON.stringify(tileSize));
@@ -378,12 +378,12 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
         imageSize.height *= scale;
         return imageSize;
     }
-    
+
     function getDisplayedImages() {
         if (!this.oldDisplaySettings ||
             !this.oldDisplaySettings.displayedImages)
             return [];
-        
+
         return this.oldDisplaySettings.displayedImages;
     }
 
@@ -393,7 +393,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             return false;
         if (!oldDisplaySettings && !displaySettings)
             return true;
-        
+
         var isSameGridSize = displaySettings.gridSize.width === oldDisplaySettings.gridSize.width &&
             displaySettings.gridSize.height === oldDisplaySettings.gridSize.height;
         var isSameGallerySize = displaySettings.gallerySize.width === oldDisplaySettings.gallerySize.width &&
@@ -406,7 +406,7 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
             arraysIdentical;
         return r;
     }
-    
+
     function areArraysIdentical(a1, a2) {
         return a1 === a2 ||
             a1.length === a2.length &&
@@ -414,6 +414,6 @@ define(["logger", "promise", "gallery", "imageview", "galleryviewsettings", "svg
                 return obj === a2[index];
             });
     }
-    
+
     return GalleryView;
 });
