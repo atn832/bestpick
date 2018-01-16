@@ -36,12 +36,14 @@ function initialize(Logger) {
     }
 
     compareBtn = document.getElementById(compareBtnID);
-    compareBtn.addEventListener("click", function() {
+    compareBtn.addEventListener("click", compare);
+    function compare() {
         showPage(Page.Compare);
-    });
+    }
 
     deleteBtn = document.getElementById(deleteBtnID);
-    deleteBtn.addEventListener("click", function() {
+    deleteBtn.addEventListener("click", deleteImages);
+    function deleteImages() {
         var selectedImages = gallery.get("selectedImages").slice();
         gallery.get("images").remove(selectedImages);
         requirejs(["filesystem"], function(FileSystem) {
@@ -52,10 +54,30 @@ function initialize(Logger) {
             resetFlag(gallery.get("selectedImages"), "isSelected");
             galleryView.render();
         });
-    });
+    }
 
     keepBtn = document.getElementById(keepBtnID);
-    keepBtn.addEventListener("click", function() {
+    keepBtn.addEventListener("click", keep);
+    document.addEventListener("keydown", event => {
+      switch(event.key) {
+        case "c":
+          compare();
+          break;
+        case "k":
+          keep();
+          break;
+        case "Escape":
+          cancelCompare();
+          break;
+        case "Backspace":
+        case "d":
+          deleteImages();
+          break;
+        default:
+          console.log(event);
+      }
+    });
+    function keep() {
         // remove selected images that are not favorites
         var toRemove = [];
         var selectedImages = gallery.get("selectedImages");
@@ -81,16 +103,17 @@ function initialize(Logger) {
           resetFlag(gallery.get("selectedImages"), "isSelected");
           showPage(Page.Select);
         }
-    });
+    }
 
     cancelCompareBtn = document.getElementById(cancelCompareBtnID);
-    cancelCompareBtn.addEventListener("click", function() {
+    cancelCompareBtn.addEventListener("click", cancelCompare);
+    function cancelCompare() {
         // reset favorites
         resetFlag(gallery.get("selectedImages"), "isSelected");
         resetFlag(gallery.get("favoriteImages"), "isFavorite");
         // view all
         showPage(Page.Select);
-    });
+    }
 
     requirejs(["filesystem", "gallery", "galleryview", "image", "logger", "jquery.mousewheel"], function(FileSystem, Gallery, GalleryView, Image, Logger, m) {
         Logger.log("initializing gallery");
