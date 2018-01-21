@@ -8,12 +8,14 @@
         <link rel="stylesheet" href="css/prototype.css">
         <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
         <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
+        <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
         <script src="bower_components/jquery/dist/jquery.min.js"></script>
         <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
         <script src="bower_components/hammerjs/hammer.min.js"></script>
         <script src="node_modules/requirejs/require.js"></script>
         <script src="js/main.js"></script>
         <script src="js/app.js"></script>
+        <script>if (window.module) module = window.module;</script>
     </head>
     <body>
         <div id="carousel-example-generic" class="carousel slide h-100" data-ride="carousel" data-interval="false">
@@ -26,7 +28,7 @@
                                 <li class="v-h"><a href="#carousel-example-generic" role="button" data-slide="next"><span class="glyphicon glyphicon-chevron-right"></span></a></li>
                                 <li class="fx-g-1"><h3 class="ta-c va-c pos-a w-100 m-0">Drag pictures to the drop zone</h3></li>
                                 <li class="v-h"><a href="#carousel-example-generic" role="button" data-slide="next"><span class="glyphicon glyphicon-chevron-right"></span></a></li>
-                            </ul>    
+                            </ul>
                         </nav>
                         <div class="fx-g-1 pos-r bgc-dg">
                             <div class="pos-a va-c ta-c w-100 start-0"><h3 class="m-0">Drop zone</h3></div>
@@ -50,7 +52,7 @@
                             <ul class="nav navbar-nav w-100 fx fx-r">
                                 <li><a href="#carousel-example-generic" role="button" data-slide="prev"><span class="glyphicon glyphicon-chevron-left"></span></a></li>
                                 <li class="fx-g-1"><h3 class="ta-c va-c pos-a w-100 m-0">Select pictures to process</h3></li>
-                            </ul>    
+                            </ul>
                         </nav>
                         <div id="container" class="fx-g-1 pos-r ov-y-a"></div>
                         <nav id="toolbar" class="navbar navbar-default navbar-fixed-bottom fx-n bgc-lg pos-r" role="navigation" style="position: relative; /* cancel navbar-fixed-bottom's position fixed */">
@@ -77,7 +79,7 @@
                             <ul class="nav navbar-nav w-100 fx fx-r">
                                 <li><a id="btnCancelCompare" href="#carousel-example-generic" role="button" data-slide="prev"><span class="glyphicon glyphicon-chevron-left"></span></a></li>
                                 <li class="fx-g-1"><h3 class="ta-c va-c pos-a w-100 m-0">Select pictures to keep</h3></li>
-                            </ul>    
+                            </ul>
                         </nav>
                         <div id="compareContainer" class="fx-g-1 pos-r ov-y-a"></div>
                         <nav id="toolbar" class="navbar navbar-default navbar-fixed-bottom fx-n bgc-lg pos-r" role="navigation" style="position: relative; /* cancel navbar-fixed-bottom's position fixed */">

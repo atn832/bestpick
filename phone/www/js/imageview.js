@@ -3,6 +3,9 @@
 **/
 define(["logger", "util", "imageprocessor", "job", "filesystem", "transformation", "rectangle", "svg", "imagemetadata", "backbone"], function(Logger, Util, ImageProcessor, Job, FileSystem, Transformation, Rectangle, SVG, ImageMetadata) {
     const sharp = require('sharp');
+    const threads = sharp.concurrency();
+    console.log("concurrency", threads);
+
     const OneTransparentPixel = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw== ";
 
     var fullResolutionGenerationTimeout = 500;
@@ -318,7 +321,7 @@ define(["logger", "util", "imageprocessor", "job", "filesystem", "transformation
                 }
                 catch (e) {
                   Logger.log(e);
-                    Logger.log(e);
+                  return OneTransparentPixel;
                 }
             }.bind(this));
         },
@@ -335,7 +338,11 @@ define(["logger", "util", "imageprocessor", "job", "filesystem", "transformation
     });
 
     async function getImageMetadata(buffer) {
-      return sharp(buffer).metadata();
+      Logger.log("getImageMetadata");
+      return sharp(buffer).metadata().catch(e => {
+        Logger.log(e);
+        return {};
+      });
     }
 
     /**
@@ -343,6 +350,7 @@ define(["logger", "util", "imageprocessor", "job", "filesystem", "transformation
     * @param cover if false, will do contain instead
     **/
     async function resizeImage(srcImageObject, fullSize, width, height, cover) {
+        Logger.log("reizeImage");
         var newWidth = width;
         var newHeight = height;
 
@@ -385,6 +393,7 @@ define(["logger", "util", "imageprocessor", "job", "filesystem", "transformation
             .then(buffer => toDataURI('jpeg', buffer))
             .catch(e => {
                 Logger.log(e);
+                return OneTransparentPixel;
             });
     }
 
@@ -392,6 +401,7 @@ define(["logger", "util", "imageprocessor", "job", "filesystem", "transformation
     * @param matrix matrix of the full transformation from src image size to device (ie it also contains fit transformation in it)
     **/
     async function getSubImage(srcImageObject, fullSize, thumbnailSize, matrix) {
+        Logger.log("getSubImage");
         var devImageRect = Transformation.transform(fullSize, matrix);
 
         var thumbnailRect = {
@@ -431,9 +441,11 @@ define(["logger", "util", "imageprocessor", "job", "filesystem", "transformation
                 .then(buffer => toDataURI('jpeg', buffer))
                 .catch(e => {
                     Logger.log(e);
+                    return OneTransparentPixel;
                 });
         } catch(e) {
             alert("cannot resize" + e)
+            return OneTransparentPixel;
         }
     }
 

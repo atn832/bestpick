@@ -29,9 +29,9 @@ function initialize(Logger) {
     dirdrop = document.getElementById(dirdropID);
     if (dirdrop) {
         dirdrop.addEventListener("change", function(evt) {
-            var dir = dirdrop.value
-            Logger.log(dirdrop.value);
-            openFolder(dirdrop.value);
+            var dir = evt.target.files[0].path;
+            Logger.log(dir);
+            openFolder(dir);
         });
     }
 
