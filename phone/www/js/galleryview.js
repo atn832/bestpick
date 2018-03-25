@@ -85,7 +85,9 @@ define(["logger", "gallery", "imageview", "galleryviewsettings", "svg", "backbon
                     imageViewsToRemove.push(imageView);
             }
             imageViewsToRemove.forEach(function(imageView) {
-                imageView.el.parentElement.removeChild(imageView.el);
+                if (imageView.el.parentElement) {
+                    imageView.el.parentElement.removeChild(imageView.el);
+                }
                 var image = imageView.model;
                 var cid = image.cid;
                 delete this.imageViews[cid];

@@ -111,9 +111,11 @@ define(["logger", "util", "imageprocessor", "job", "filesystem", "transformation
                         } catch (e) {
                             Logger.log(e);
                         }
+                    }).catch(e => {
+                      Logger.log(e)
                     });
                   } catch(e) {
-                      Logger.log(e);;
+                      Logger.log(e);
                   }
                 }
                 try {
@@ -444,7 +446,7 @@ define(["logger", "util", "imageprocessor", "job", "filesystem", "transformation
                     return OneTransparentPixel;
                 });
         } catch(e) {
-            alert("cannot resize" + e)
+            Logger.log("cannot resize" + e)
             return OneTransparentPixel;
         }
     }

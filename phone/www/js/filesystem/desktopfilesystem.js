@@ -1,4 +1,5 @@
 define(["logger", "image"], function(Logger, Image) {
+    const OneTransparentPixel = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw== ";
     var DefaultPath = ".";
 
     String.prototype.endsWith = function(suffix) {
@@ -102,11 +103,21 @@ define(["logger", "image"], function(Logger, Image) {
     * Returns a promise for an URI that an ImageElement can understand. Can be an URL or base64 encoded image data
     **/
     DesktopFileSystem.prototype.getDataURI = function(filepath) {
-        var p = new Promise(function(resolve) {
+        var p = new Promise(function(resolve, reject) {
             fs.readFile(filepath, function(err, data) {
                 var extension = filepath.slice(filepath.lastIndexOf(".") + 1);
-                var dataURI = "data:image/" + extension + ";base64," + Buffer(data).toString('base64');
-                resolve(dataURI);
+                if (!data) {
+                  // reject("no data for " + filepath);
+                  resolve(OneTransparentPixel);
+                }
+                try {
+                  var dataURI = "data:image/" + extension + ";base64," + Buffer(data).toString('base64');
+                  resolve(dataURI);
+                } catch(e) {
+                  // console.log(data);
+                  // reject(e);
+                  resolve(OneTransparentPixel);
+                }
             });
         });
         return p;
