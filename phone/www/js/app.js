@@ -108,9 +108,16 @@ function initialize(Logger) {
     cancelCompareBtn = document.getElementById(cancelCompareBtnID);
     cancelCompareBtn.addEventListener("click", cancelCompare);
     function cancelCompare() {
+        // set as seen
+        var selectedImages = gallery.get("selectedImages");
+        selectedImages.forEach(selectedImage => {
+            selectedImage.set("hasBeenSeen", true);
+        });
+
         // reset favorites
         resetFlag(gallery.get("selectedImages"), "isSelected");
         resetFlag(gallery.get("favoriteImages"), "isFavorite");
+
         // view all
         showPage(Page.Select);
     }

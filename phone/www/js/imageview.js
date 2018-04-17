@@ -147,7 +147,8 @@ define(["logger", "util", "imageprocessor", "job", "filesystem", "transformation
             if (image) {
                 this.tileBorder.classList.add("tile");
                 if (!this.isThumbnailUpdateEnabled()) {
-                    this.tileBorder.classList.toggle("selected", image.get("isSelected") === true);
+                  this.tileBorder.classList.toggle("selected", image.get("isSelected") === true);
+                  this.tileBorder.classList.toggle("seen", image.get("hasBeenSeen") === true);
                 }
                 this.tileBorder.classList.toggle("favorite", image.get("isFavorite") === true);
 
