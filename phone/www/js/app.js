@@ -38,6 +38,11 @@ function initialize(Logger) {
     compareBtn = document.getElementById(compareBtnID);
     compareBtn.addEventListener("click", compare);
     function compare() {
+        // set as not seen
+        const selectedImages = gallery.get("selectedImages");
+        selectedImages.forEach(selectedImage => {
+            selectedImage.set("hasBeenSeen", false);
+        });
         showPage(Page.Compare);
     }
 
@@ -84,8 +89,9 @@ function initialize(Logger) {
         selectedImages.forEach(function(selectedImage) {
             if (!selectedImage.get("isFavorite"))
                 toRemove.push(selectedImage);
+            else
+                selectedImage.set("hasBeenSeen", true);
         });
-        console.log("removing", toRemove);
         gallery.get("images").remove(toRemove);
         requirejs(["filesystem"], function(FileSystem) {
             toRemove.forEach(function(image) {
@@ -95,9 +101,6 @@ function initialize(Logger) {
         });
 
         // unselect all:
-        // two-way setting of these is not implemented
-//        gallery.get("selectedImages").reset();
-//        gallery.get("favoriteImages").reset();
         resetFlag(gallery.get("favoriteImages"), "isFavorite");
         if (selectedImages.length == 1) {
           resetFlag(gallery.get("selectedImages"), "isSelected");
@@ -109,7 +112,7 @@ function initialize(Logger) {
     cancelCompareBtn.addEventListener("click", cancelCompare);
     function cancelCompare() {
         // set as seen
-        var selectedImages = gallery.get("selectedImages");
+        const selectedImages = gallery.get("selectedImages");
         selectedImages.forEach(selectedImage => {
             selectedImage.set("hasBeenSeen", true);
         });
@@ -251,7 +254,7 @@ function initialize(Logger) {
             } catch (e) {
                 Logger.log("mousewheel out of image", e);
             }
-            var factor = 1 + Math.sqrt(Math.abs(event.deltaY)) / 10;
+            var factor = 1 + Math.sqrt(Math.abs(event.deltaY)) / 30;
             if (event.deltaY > 0)
                 factor = 1 / factor;
             cgv.zoom(factor, center);
