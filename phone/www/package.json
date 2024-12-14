@@ -8,10 +8,10 @@
         "height": 600
     },
     "devDependencies": {
-        "electron": "^4.0.4",
+        "electron": "^33.2.1",
         "requirejs": ">=2.1.11"
     },
     "dependencies": {
-        "sharp": "^0.21.3"
+        "sharp": "^0.33.5"
     }
 }
